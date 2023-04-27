@@ -4,6 +4,10 @@ import os
 import pandas as pd
 from io import StringIO
 import holidays
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 st.set_page_config(layout="wide", page_title="STAG Výkazy", page_icon="📄")
 
@@ -27,9 +31,6 @@ vars = {
     "outputFormatEncoding": "utf-8",
 }
 
-origin_url = "http://localhost:8501/"
-login_url = f"https://ws.ujep.cz/ws/login?originalURL={origin_url}"
-
 if "stagUserTicket" not in st.session_state:
     ticket = st.experimental_get_query_params().get("stagUserTicket")
     st.session_state["stagUserTicket"] = ticket
@@ -39,7 +40,7 @@ if not st.session_state["stagUserTicket"]:
     st.write(
         f"""<h2>
     Přihlašte se pomocí <a target="_self"
-    href="{login_url}">Stagu</a></h2>""",
+    href="{os.getenv("LOGIN_URL")}">Stagu</a></h2>""",
         unsafe_allow_html=True,
     )
 else:
