@@ -48,7 +48,7 @@ if "stagUserTicket" not in st.session_state:
 if not st.session_state["stagUserTicket"]:
     st.write(
         f"""<h2>
-    Přihlašte se pomocí <a target="_self"
+    Přihlašte se pomocí <a target="_blank"
     href="{os.getenv("TEST_LOGIN_URL")}">Stagu</a></h2>""",
         unsafe_allow_html=True,
     )
