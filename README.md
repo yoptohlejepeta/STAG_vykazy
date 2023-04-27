@@ -1,0 +1,1 @@
+# STAG_vykazy
