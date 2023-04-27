@@ -14,25 +14,11 @@ st.set_page_config(layout="wide", page_title="STAG Výkazy", page_icon="📄")
 st.title("Výkazy")
 
 # data_url = "https://ws.ujep.cz/ws/services/rest2/rozvrhy/getRozvrhByUcitel"
-data_url = "https://stag-demo.zcu.cz/ws/services/rest2/ucitel/getUciteleKatedry"
+ucitele_url = "https://stag-demo.zcu.cz/ws/services/rest2/ucitel/getUciteleKatedry"
+rozvrhy_url = "https://stag-demo.zcu.cz/ws/services/rest2/rozvrhy/getRozvrhByUcitel"
 czech_holidays = holidays.CZ(years=2023)
 
-# vars = {
-#     "ucitIdno": 3521,
-#     "semestr": "LS",
-#     "vsechnyCasyKonani": True,
-#     "jenRozvrhoveAkce": False,
-#     # "datumOd":"1.4.2023",
-#     # "datumDo":"30.4.2023",
-#     "vsechnyAkce": True,
-#     "jenBudouciAkce": False,
-#     "lang": "cs",
-#     "outputFormat": "CSV",
-#     "rok": 2022,
-#     "outputFormatEncoding": "utf-8",
-# }
-
-vars = {
+vars_ucitele = {
     "lang" : "cs",
     "outputFormat" : "CSV",
     "katedra" : "KMA",
@@ -53,12 +39,28 @@ if not st.session_state["stagUserTicket"]:
         unsafe_allow_html=True,
     )
 else:
-
-    st.write(st.session_state["stagUserTicket"])
-    response = requests.get(data_url, cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]}, params=vars)
+    response = requests.get(ucitele_url, cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]}, params=vars)
     data = response.text
+    data = pd.read_csv(StringIO(data), sep=";")
+    for i in data["ucitIdno"]:
+        vars_rozvrhy = {
+        "ucitIdno": i,
+        "semestr": "LS",
+        "vsechnyCasyKonani": True,
+        "jenRozvrhoveAkce": False,
+        # "datumOd":"1.4.2023",
+        # "datumDo":"30.4.2023",
+        "vsechnyAkce": True,
+        "jenBudouciAkce": False,
+        "lang": "cs",
+        "outputFormat": "CSV",
+        "rok": 2022,
+        "outputFormatEncoding": "utf-8",
+        }
+        response = requests.get(rozvrhy_url, cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]}, params=vars)
+        data = response.text
+        data = pd.read_csv(StringIO(data), sep=";")
 
-    df = pd.read_csv(StringIO(data), sep=";")
     # df = df.loc[
     #     (df.denZkr == "So") | (df.denZkr == "Ne") & (~df.datum.isin(czech_holidays))
     # ]
@@ -76,4 +78,4 @@ else:
     #     ]
     # ]
 
-    edited_df = st.experimental_data_editor(df, use_container_width=True)
+        edited_df = st.experimental_data_editor(data, use_container_width=True)
