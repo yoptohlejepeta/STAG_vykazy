@@ -24,48 +24,52 @@ if "stagUserTicket" not in st.session_state:
 if not st.session_state["stagUserTicket"]:
     st.write(
         f"""<h2>
-    Přihlašte se pomocí <a target="_blank"
+    Přihlašte se pomocí <a
     href="{os.getenv("LOGIN_URL")}">Stagu</a></h2>""",
         unsafe_allow_html=True,
     )
 else:
     idno = st.text_input("Idno vyučujícího")
 
-if idno:
-    vars = {
-    "ucitIdno": idno,
-    "semestr": "LS",
-    "vsechnyCasyKonani": True,
-    "jenRozvrhoveAkce": False,
-    # "datumOd":"1.4.2023",
-    # "datumDo":"30.4.2023",
-    "vsechnyAkce": True,
-    "jenBudouciAkce": False,
-    "lang": "cs",
-    "outputFormat": "CSV",
-    "rok": 2022,
-    "outputFormatEncoding": "utf-8",
-}
+    if idno:
+        vars = {
+            "ucitIdno": idno,
+            "semestr": "LS",
+            "vsechnyCasyKonani": True,
+            "jenRozvrhoveAkce": False,
+            # "datumOd":"1.4.2023",
+            # "datumDo":"30.4.2023",
+            "vsechnyAkce": True,
+            "jenBudouciAkce": False,
+            "lang": "cs",
+            "outputFormat": "CSV",
+            "rok": 2022,
+            "outputFormatEncoding": "utf-8",
+        }
 
-    response = requests.get(data_url, cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]}, params=vars)
-    data = response.text
+        response = requests.get(
+            data_url,
+            cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
+            params=vars,
+        )
+        data = response.text
 
-    df = pd.read_csv(StringIO(data), sep=";")
-    df = df.loc[
-        (df.denZkr == "So") | (df.denZkr == "Ne") & (~df.datum.isin(czech_holidays))
-    ]
-    df.reset_index(inplace=True)
-    df = df[
-        [
-            "predmet",
-            "nazev",
-            "datum",
-            "obsazeni",
-            "pocetVyucHodin",
-            "hodinaSkutOd",
-            "hodinaSkutDo",
-            "typAkceZkr"
+        df = pd.read_csv(StringIO(data), sep=";")
+        df = df.loc[
+            (df.denZkr == "So") | (df.denZkr == "Ne") & (~df.datum.isin(czech_holidays))
         ]
-    ]
+        df.reset_index(inplace=True)
+        df = df[
+            [
+                "predmet",
+                "nazev",
+                "datum",
+                "obsazeni",
+                "pocetVyucHodin",
+                "hodinaSkutOd",
+                "hodinaSkutDo",
+                "typAkceZkr",
+            ]
+        ]
 
-    edited_df = st.experimental_data_editor(df, use_container_width=True)
+        edited_df = st.experimental_data_editor(df, use_container_width=True)
