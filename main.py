@@ -30,25 +30,24 @@ if not st.session_state["stagUserTicket"]:
         unsafe_allow_html=True,
     )
 else:
-    input = st.text_input("Idno vyučujícího")
+    idnos = st.text_input("Idno vyučujícího")
     col1, col2, col3 = st.columns(3)
     typ = col1.radio(
         "Časové období", ["Datum od do", "Podle semestru"] #"Aktuální měsíc" 
     )
 
-vars = {
-    "vsechnyCasyKonani": True,
-    "jenRozvrhoveAkce": False,
-    "vsechnyAkce": True,
-    "jenBudouciAkce": False,
-    "lang": "cs",
-    "outputFormat": "CSV",
-    "rok": 2022,
-    "outputFormatEncoding": "utf-8",
-}
+    vars = {
+        "vsechnyCasyKonani": True,
+        "jenRozvrhoveAkce": False,
+        "vsechnyAkce": True,
+        "jenBudouciAkce": False,
+        "lang": "cs",
+        "outputFormat": "CSV",
+        "rok": 2022,
+        "outputFormatEncoding": "utf-8",
+    }
 
-match typ:
-    case "Podle semestru":
+    if typ == "Podle semestru":
         semestr = col2.selectbox(
             "Semestr",
             ["", "ZS", "LS"],
@@ -57,7 +56,7 @@ match typ:
         vars["semestr"] = semestr
         vars.pop("datumOd", None)
         vars.pop("datumDo", None)
-    case "Datum od do":
+    elif typ == "Datum od do":
         datum = col2.date_input(
             label="Datum",
             value=[datetime.date(2022, 9, 19), datetime.date(2023, 9, 30)],
@@ -71,46 +70,47 @@ match typ:
             pass
         vars.pop("semestr", None)
 
-if input:
-    for idno in input.replace(" ", "").split(","):
-        vars["ucitIdno"] = idno
 
-        response = requests.get(
-            data_url,
-            cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
-            params=vars,
-        )
-        data = response.text
+    if idnos:
+        for idno in idnos.replace(" ", "").split(","):
+            vars["ucitIdno"] = idno
 
-        df = pd.read_csv(StringIO(data), sep=";")
-        df = df.loc[
-            (df.denZkr == "So")
-            | (df.denZkr == "Ne")
-            & (~df.datum.isin(czech_holidays))
-        ]
-        df = df.loc[df["obsazeni"] > 0]
-        df.reset_index(inplace=True)
-        df["hodinaSkutOd"] = pd.to_datetime(df["hodinaSkutOd"], format="%H:%M")
-        df["hodinaSkutDo"] = pd.to_datetime(df["hodinaSkutDo"], format="%H:%M")
-        df["pocetHodin"] = (
-            df["hodinaSkutDo"] - df["hodinaSkutOd"]
-        ).apply(lambda x: x.total_seconds()) / 3600
-        df["hodinaSkutOd"] = df["hodinaSkutOd"].dt.strftime("%H:%M")
-        df["hodinaSkutDo"] = df["hodinaSkutDo"].dt.strftime("%H:%M")
-        st.subheader(df["jmeno.ucitel"][0] + " " + df["prijmeni.ucitel"][0] + " " + f"({idno})")
-        df = df[
-            [
-                "predmet",
-                "nazev",
-                "datum",
-                "obsazeni",
-                "pocetVyucHodin",
-                "pocetHodin",
-                "hodinaSkutOd",
-                "hodinaSkutDo",
-                "typAkceZkr",
+            response = requests.get(
+                data_url,
+                cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
+                params=vars,
+            )
+            data = response.text
+
+            df = pd.read_csv(StringIO(data), sep=";")
+            df = df.loc[
+                (df.denZkr == "So")
+                | (df.denZkr == "Ne")
+                & (~df.datum.isin(czech_holidays))
             ]
-        ]
+            df = df.loc[df["obsazeni"] > 0]
+            df.reset_index(inplace=True)
+            df["hodinaSkutOd"] = pd.to_datetime(df["hodinaSkutOd"], format="%H:%M")
+            df["hodinaSkutDo"] = pd.to_datetime(df["hodinaSkutDo"], format="%H:%M")
+            df["pocetHodin"] = (
+                df["hodinaSkutDo"] - df["hodinaSkutOd"]
+            ).apply(lambda x: x.total_seconds()) / 3600
+            df["hodinaSkutOd"] = df["hodinaSkutOd"].dt.strftime("%H:%M")
+            df["hodinaSkutDo"] = df["hodinaSkutDo"].dt.strftime("%H:%M")
+            st.subheader(df["jmeno.ucitel"][0] + " " + df["prijmeni.ucitel"][0] + " " + f"({idno})")
+            df = df[
+                [
+                    "predmet",
+                    "nazev",
+                    "datum",
+                    "obsazeni",
+                    "pocetVyucHodin",
+                    "pocetHodin",
+                    "hodinaSkutOd",
+                    "hodinaSkutDo",
+                    "typAkceZkr",
+                ]
+            ]
 
-        edited_df = st.experimental_data_editor(df, use_container_width=True, height= ((len(df)) + 1) * 35 + 3)
-        st.metric("Počet hodin", sum(edited_df["pocetHodin"]))
+            edited_df = st.experimental_data_editor(df, use_container_width=True, height= ((len(df)) + 1) * 35 + 3)
+            st.metric("Počet hodin", sum(edited_df["pocetHodin"]))
