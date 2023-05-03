@@ -145,10 +145,13 @@ if idnos:
             height=((len(df)) + 2) * 35 + 3,
             num_rows="dynamic",
         )
-        # st.download_button(
-        #     label="Stáhnout CSV",
-        #     data=edited_data,
-        #     file_name="data.csv",
-        #     mime='text/csv',
-        # )
-        st.metric("Počet hodin", int(sum(edited_df["pocetVyucHodin"].fillna(0))))
+
+        col1, col2 = st.columns(2)
+
+        col1.metric("Počet hodin", int(sum(edited_df["pocetVyucHodin"].fillna(0))))
+        col2.download_button(
+            label="Stáhnout CSV",
+            data=edited_df.to_csv(index=False).encode('utf-8'),
+            file_name=f"vykaz-{jmeno}-{prijmeni}-{idno}.csv",
+            mime="text/csv",
+        )
