@@ -23,6 +23,7 @@ if "stagUserTicket" not in st.session_state:
 
 
 if not st.session_state["stagUserTicket"]:
+    idnos = None
     st.write(
         f"""<h2>
     Přihlašte se pomocí <a
@@ -30,10 +31,12 @@ if not st.session_state["stagUserTicket"]:
         unsafe_allow_html=True,
     )
 else:
-    idnos = st.text_input("Idno vyučujícího")
+    idnos = st.text_input(
+        "Idno vyučujícího", help="Zadejte Idno vyučujících oddělené čárkami."
+    )
     col1, col2, col3 = st.columns(3)
     typ = col1.radio(
-        "Časové období", ["Datum od do", "Podle semestru"] #"Aktuální měsíc" 
+        "Časové období", ["Datum od do", "Podle semestru"]  # "Aktuální měsíc"
     )
 
     vars = {
@@ -71,46 +74,81 @@ else:
         vars.pop("semestr", None)
 
 
-    if idnos:
-        for idno in idnos.replace(" ", "").split(","):
-            vars["ucitIdno"] = idno
+if idnos:
+    for idno in idnos.replace(" ", "").split(","):
+        vars["ucitIdno"] = idno
 
-            response = requests.get(
-                data_url,
-                cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
-                params=vars,
-            )
-            data = response.text
+        response = requests.get(
+            data_url,
+            cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
+            params=vars,
+        )
+        data = response.text
 
-            df = pd.read_csv(StringIO(data), sep=";")
-            df = df.loc[
-                (df.denZkr == "So")
-                | (df.denZkr == "Ne")
-                & (~df.datum.isin(czech_holidays))
-            ]
-            df = df.loc[df["obsazeni"] > 0]
-            df.reset_index(inplace=True)
-            df["hodinaSkutOd"] = pd.to_datetime(df["hodinaSkutOd"], format="%H:%M")
-            df["hodinaSkutDo"] = pd.to_datetime(df["hodinaSkutDo"], format="%H:%M")
-            df["pocetHodin"] = (
-                df["hodinaSkutDo"] - df["hodinaSkutOd"]
-            ).apply(lambda x: x.total_seconds()) / 3600
-            df["hodinaSkutOd"] = df["hodinaSkutOd"].dt.strftime("%H:%M")
-            df["hodinaSkutDo"] = df["hodinaSkutDo"].dt.strftime("%H:%M")
-            st.subheader(df["jmeno.ucitel"][0] + " " + df["prijmeni.ucitel"][0] + " " + f"({idno})")
-            df = df[
-                [
-                    "predmet",
-                    "nazev",
-                    "datum",
-                    "obsazeni",
-                    "pocetVyucHodin",
-                    "pocetHodin",
-                    "hodinaSkutOd",
-                    "hodinaSkutDo",
-                    "typAkceZkr",
-                ]
-            ]
+        df = pd.read_csv(StringIO(data), sep=";")
+        if df.empty:
+            st.subheader(idno)
+            st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
+            continue
 
-            edited_df = st.experimental_data_editor(df, use_container_width=True, height= ((len(df)) + 1) * 35 + 3)
-            st.metric("Počet hodin", sum(edited_df["pocetHodin"]))
+        jmeno = df["jmeno.ucitel"][0]
+        prijmeni = df["prijmeni.ucitel"][0]
+
+        df = df.loc[
+            (df.denZkr == "So") | (df.denZkr == "Ne") & (~df.datum.isin(czech_holidays))
+        ]
+        df = df.loc[df["obsazeni"] > 0]
+        df.reset_index(inplace=True)
+        df["hodinaSkutOd"] = pd.to_datetime(df["hodinaSkutOd"], format="%H:%M")
+        df["hodinaSkutDo"] = pd.to_datetime(df["hodinaSkutDo"], format="%H:%M")
+        df["hodinaOdDo"] = (
+            df["hodinaSkutOd"]
+            .dt.strftime("%H:%M")
+            .str.cat(df["hodinaSkutDo"].dt.strftime("%H:%M"), sep="—")
+        )
+        df["kodPredmetu"] = df["katedra"] + "/" + df["predmet"]
+        df["pocetVyucHodin"] = df["pocetVyucHodin"].fillna(
+            (df["hodinaSkutDo"] - df["hodinaSkutOd"]).apply(lambda x: x.total_seconds())
+            / 3600
+        )
+
+        df["akce"] = df["kodPredmetu"].str.cat(
+            df["nazev"].str.cat(df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "),
+            sep="  ",
+        )
+
+        st.subheader(f"{jmeno} {prijmeni} ({idno})")
+
+        df = df[["datum", "hodinaOdDo", "pocetVyucHodin", "akce"]]
+
+        try:
+            for i in range(len(df)):
+                row = df.iloc[i]
+                # for j in range(i + 1, len(df)):
+                next_row = df.iloc[i + 1]
+                while (row["datum"] == next_row["datum"]) and (
+                    row["hodinaOdDo"] == next_row["hodinaOdDo"]
+                ):
+                    df.iloc[i, df.columns.get_loc("akce")] = " + ".join(
+                        [row["akce"], next_row["akce"]]
+                    )
+                    df.drop(labels=i + 1, inplace=True)
+                    df.reset_index(inplace=True, drop=True)
+                    next_row = df.iloc[i + 1]
+                    row = df.iloc[i]
+        except IndexError:
+            pass
+
+        edited_df = st.experimental_data_editor(
+            df,
+            use_container_width=True,
+            height=((len(df)) + 2) * 35 + 3,
+            num_rows="dynamic",
+        )
+        # st.download_button(
+        #     label="Stáhnout CSV",
+        #     data=edited_data,
+        #     file_name="data.csv",
+        #     mime='text/csv',
+        # )
+        st.metric("Počet hodin", int(sum(edited_df["pocetVyucHodin"])))
