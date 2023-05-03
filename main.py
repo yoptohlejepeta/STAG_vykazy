@@ -3,7 +3,7 @@ import requests
 import os
 import datetime
 import pandas as pd
-from io import StringIO
+from io import StringIO, BytesIO
 import holidays
 from dotenv import load_dotenv
 
@@ -36,7 +36,7 @@ else:
         "Idno vyučujícího", placeholder="Zadejte Idno vyučujících oddělené čárkami"
     )
     col1, col2, col3 = st.columns(3)
-    typ = col1.radio("Časové období", ["Datum od do", "Podle semestru", "Podle měsíce"])
+    typ = col1.radio("Časové období", ["Podle měsíce", "Datum od do", "Podle semestru"])
 
     vars = {
         "vsechnyCasyKonani": True,
@@ -103,16 +103,17 @@ if idnos:
             st.subheader(idno)
             st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
             continue
+        
+        try:
+            ucitel = requests.get(
+                ucitel_url,
+                cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
+                params={"ucitIdno" : idno, "outputFormat": "CSV", "outputFormatEncoding": "utf-8"}
+            )
 
-        ucitel = requests.get(
-            ucitel_url,
-            cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
-            params={"ucitIdno" : idno, "outputFormat": "CSV", "outputFormatEncoding": "utf-8"}
-        )
-
-        ucit_data = ucitel.text
-        ucit_df = pd.read_csv(StringIO(ucit_data), sep=";")
-        if ucit_df.empty:
+            ucit_data = ucitel.text
+            ucit_df = pd.read_csv(StringIO(ucit_data), sep=";")
+        except:
             st.subheader(idno)
             st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
             continue
@@ -125,7 +126,11 @@ if idnos:
         data = rozvrh.text
 
         df = pd.read_csv(StringIO(data), sep=";")
-        
+
+        df.datum = pd.to_datetime(df.datum.apply(lambda x: x.replace(".", "/")), format = "%d/%m/%Y")
+        df.sort_values(by=["datum", "hodinaSkutOd"], ascending=True, inplace=True)
+        df.datum = df.datum.dt.strftime("%d/%m/%Y").apply(lambda x: x.replace("/", "."))
+
         jmeno = ucit_df["jmeno"][0]
         prijmeni = ucit_df["prijmeni"][0]
 
@@ -146,11 +151,12 @@ if idnos:
             (df["hodinaSkutDo"] - df["hodinaSkutOd"]).apply(lambda x: x.total_seconds())
             / 3600
         )
-
+        
         df["akce"] = df["kodPredmetu"].str.cat(
             df["nazev"].str.cat(df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "),
             sep="  ",
         )
+        df.loc[df["kodPredmetu"] == df["nazev"], "akce"] = df["kodPredmetu"].str.cat(df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  ")
 
         st.subheader(f"{jmeno} {prijmeni} ({idno})")
 
@@ -180,9 +186,22 @@ if idnos:
             num_rows="dynamic",
         )
 
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns([9,1])
 
-        col1.metric("Počet hodin", int(sum(edited_df["pocetVyucHodin"].fillna(0))))
+        col1.metric("Počet hodin", sum(edited_df["pocetVyucHodin"].fillna(0)))
+
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            df.to_excel(writer, sheet_name='Sheet1', index=False)
+            writer.save()
+
+            col2.download_button(
+                label="Stáhnout Excel",
+                data=buffer,
+                file_name=f"vykaz-{jmeno}-{prijmeni}-{idno}.xlsx",
+                mime="application/vnd.ms-excel"
+            )
+
         col2.download_button(
             label="Stáhnout CSV",
             data=edited_df.to_csv(index=False).encode("utf-8"),
