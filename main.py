@@ -12,7 +12,7 @@ load_dotenv()
 
 st.set_page_config(layout="wide", page_title="STAG Výkazy", page_icon="📄")
 
-st.title("Výkazy")
+st.title("STAG Výkazy")
 
 data_url = "https://ws.ujep.cz/ws/services/rest2/rozvrhy/getRozvrhByUcitel"
 czech_holidays = holidays.CZ(years=2023)
@@ -151,4 +151,4 @@ if idnos:
         #     file_name="data.csv",
         #     mime='text/csv',
         # )
-        st.metric("Počet hodin", int(sum(edited_df["pocetVyucHodin"])))
+        st.metric("Počet hodin", int(sum(edited_df["pocetVyucHodin"].fillna(0))))

@@ -2,4 +2,4 @@ holidays==0.23
 pandas==1.5.3
 Requests==2.29.0
 streamlit==1.21.0
-python-dotenv
+python-dotenv==1.0.0
