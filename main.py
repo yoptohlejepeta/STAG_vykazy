@@ -14,7 +14,8 @@ st.set_page_config(layout="wide", page_title="STAG Výkazy", page_icon="📄")
 
 st.title("STAG Výkazy")
 
-data_url = "https://ws.ujep.cz/ws/services/rest2/rozvrhy/getRozvrhByUcitel"
+rozvrh_url = "https://ws.ujep.cz/ws/services/rest2/rozvrhy/getRozvrhByUcitel"
+ucitel_url = "https://ws.ujep.cz/ws/services/rest2/ucitel/getUcitelInfo"
 czech_holidays = holidays.CZ(years=2023)
 
 if "stagUserTicket" not in st.session_state:
@@ -32,12 +33,10 @@ if not st.session_state["stagUserTicket"]:
     )
 else:
     idnos = st.text_input(
-        "Idno vyučujícího", help="Zadejte Idno vyučujících oddělené čárkami."
+        "Idno vyučujícího", placeholder="Zadejte Idno vyučujících oddělené čárkami"
     )
     col1, col2, col3 = st.columns(3)
-    typ = col1.radio(
-        "Časové období", ["Datum od do", "Podle semestru"]  # TODO: "Aktuální měsíc"
-    )
+    typ = col1.radio("Časové období", ["Datum od do", "Podle semestru", "Podle měsíce"])
 
     vars = {
         "vsechnyCasyKonani": True,
@@ -72,6 +71,28 @@ else:
         except:
             pass
         vars.pop("semestr", None)
+    elif typ == "Podle měsíce":
+        mesice = {
+            "Leden" : [datetime.date(2023, 1, 1), datetime.date(2023, 1, 31)],
+            "Únor" : [datetime.date(2023, 2, 1), datetime.date(2023, 2, 28)],
+            "Březen" : [datetime.date(2023, 3, 1), datetime.date(2023, 3, 31)],
+            "Duben" : [datetime.date(2023, 4, 1), datetime.date(2023, 4, 30)],
+            "Květen" : [datetime.date(2023, 5, 1), datetime.date(2023, 5, 31)],
+            "Červen" : [datetime.date(2023, 6, 1), datetime.date(2023, 6, 30)],
+            "Červenec" : [datetime.date(2023, 7, 1), datetime.date(2023, 7, 31)],
+            "Srpen" : [datetime.date(2023, 8, 1), datetime.date(2023, 8, 31)],
+            "Září" : [datetime.date(2022, 9, 1), datetime.date(2022, 9, 30)],
+            "Říjen" : [datetime.date(2022, 10, 1), datetime.date(2022, 10, 31)],
+            "Listopad" : [datetime.date(2022, 11, 1), datetime.date(2022, 11, 30)],
+            "Prosinec" : [datetime.date(2022, 12, 1), datetime.date(2022, 12, 31)],
+        }
+        mesic = col2.selectbox(
+            "Měsíc",
+            mesice.keys()
+        )
+        vars["datumOd"] = mesice.get(mesic)[0].strftime("%d/%m/%Y").replace("/", ".")
+        vars["datumDo"] = mesice.get(mesic)[1].strftime("%d/%m/%Y").replace("/", ".")
+        vars.pop("semestr", None)
 
 
 if idnos:
@@ -83,21 +104,30 @@ if idnos:
             st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
             continue
 
-        response = requests.get(
-            data_url,
+        ucitel = requests.get(
+            ucitel_url,
             cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
-            params=vars,
+            params={"ucitIdno" : idno, "outputFormat": "CSV", "outputFormatEncoding": "utf-8"}
         )
-        data = response.text
 
-        df = pd.read_csv(StringIO(data), sep=";")
-        if df.empty:
+        ucit_data = ucitel.text
+        ucit_df = pd.read_csv(StringIO(ucit_data), sep=";")
+        if ucit_df.empty:
             st.subheader(idno)
             st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
             continue
 
-        jmeno = df["jmeno.ucitel"][0]
-        prijmeni = df["prijmeni.ucitel"][0]
+        rozvrh = requests.get(
+            rozvrh_url,
+            cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
+            params=vars,
+        )
+        data = rozvrh.text
+
+        df = pd.read_csv(StringIO(data), sep=";")
+        
+        jmeno = ucit_df["jmeno"][0]
+        prijmeni = ucit_df["prijmeni"][0]
 
         df = df.loc[
             (df.denZkr == "So") | (df.denZkr == "Ne") & (~df.datum.isin(czech_holidays))
