@@ -9,3 +9,4 @@ sloupce: datum, od do (hodina skutecna), pocet hodin, stag akce (spolecne, celyk
 ## Chyby
 
 * nuly před Idnem
+* někde jsou jmena přemětu kod předmětu

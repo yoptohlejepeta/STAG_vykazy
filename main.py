@@ -36,7 +36,7 @@ else:
     )
     col1, col2, col3 = st.columns(3)
     typ = col1.radio(
-        "Časové období", ["Datum od do", "Podle semestru"]  # "Aktuální měsíc"
+        "Časové období", ["Datum od do", "Podle semestru"]  # TODO: "Aktuální měsíc"
     )
 
     vars = {
@@ -76,7 +76,12 @@ else:
 
 if idnos:
     for idno in idnos.replace(" ", "").split(","):
-        vars["ucitIdno"] = idno
+        try:
+            vars["ucitIdno"] = int(idno)
+        except:
+            st.subheader(idno)
+            st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
+            continue
 
         response = requests.get(
             data_url,
@@ -124,7 +129,6 @@ if idnos:
         try:
             for i in range(len(df)):
                 row = df.iloc[i]
-                # for j in range(i + 1, len(df)):
                 next_row = df.iloc[i + 1]
                 while (row["datum"] == next_row["datum"]) and (
                     row["hodinaOdDo"] == next_row["hodinaOdDo"]
@@ -151,7 +155,7 @@ if idnos:
         col1.metric("Počet hodin", int(sum(edited_df["pocetVyucHodin"].fillna(0))))
         col2.download_button(
             label="Stáhnout CSV",
-            data=edited_df.to_csv(index=False).encode('utf-8'),
+            data=edited_df.to_csv(index=False).encode("utf-8"),
             file_name=f"vykaz-{jmeno}-{prijmeni}-{idno}.csv",
             mime="text/csv",
         )
