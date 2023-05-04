@@ -101,24 +101,6 @@ if idnos:
             st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
             continue
 
-        try:
-            ucitel = requests.get(
-                ucitel_url,
-                cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
-                params={
-                    "ucitIdno": idno,
-                    "outputFormat": "CSV",
-                    "outputFormatEncoding": "utf-8",
-                },
-            )
-
-            ucit_data = ucitel.text
-            ucit_df = pd.read_csv(StringIO(ucit_data), sep=";")
-        except:
-            st.subheader(idno)
-            st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
-            continue
-
         rozvrh = requests.get(
             rozvrh_url,
             cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
@@ -128,15 +110,19 @@ if idnos:
         data = rozvrh.text
 
         df = pd.read_csv(StringIO(data), sep=";")
+        if df.empty:
+            st.subheader(idno)
+            st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
+            continue
+
+        jmeno = df.loc[df.ucitIdno.astype(str) == idno]["jmeno.ucitel"].iloc[0]
+        prijmeni = df.loc[df.ucitIdno.astype(str) == idno]["prijmeni.ucitel"].iloc[0]
 
         df.datum = pd.to_datetime(
             df.datum.apply(lambda x: x.replace(".", "/")), format="%d/%m/%Y"
         )
         df.sort_values(by=["datum", "hodinaSkutOd"], ascending=True, inplace=True)
         df.datum = df.datum.dt.strftime("%d/%m/%Y").apply(lambda x: x.replace("/", "."))
-
-        jmeno = ucit_df["jmeno"][0]
-        prijmeni = ucit_df["prijmeni"][0]
 
         df = df.loc[
             (df.denZkr == "So") | (df.denZkr == "Ne") & (~df.datum.isin(czech_holidays))
@@ -185,6 +171,8 @@ if idnos:
         except IndexError:
             pass
 
+        df.columns = ["Datum", "Hodina od do", "Počet hodin", "Akce"]
+
         edited_df = st.experimental_data_editor(
             df,
             use_container_width=True,
@@ -194,7 +182,7 @@ if idnos:
 
         col1, col2 = st.columns([9, 1])
 
-        col1.metric("Počet hodin", sum(edited_df["pocetVyucHodin"].fillna(0)))
+        col1.metric("Počet hodin", sum(edited_df["Počet hodin"].fillna(0)))
 
         buffer = BytesIO()
         with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
