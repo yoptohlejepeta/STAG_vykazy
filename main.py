@@ -36,7 +36,7 @@ else:
         "Idno vyučujícího", placeholder="Zadejte Idno vyučujících oddělené čárkami"
     )
     col1, col2, col3 = st.columns(3)
-    typ = col1.radio("Časové období", ["Podle měsíce", "Datum od do", "Podle semestru"])
+    typ = col1.radio("Časové období", ["Podle měsíce", "Datum od do"]) # "Podle semestru"
 
     vars = {
         "vsechnyCasyKonani": True,
@@ -73,23 +73,20 @@ else:
         vars.pop("semestr", None)
     elif typ == "Podle měsíce":
         mesice = {
-            "Leden" : [datetime.date(2023, 1, 1), datetime.date(2023, 1, 31)],
-            "Únor" : [datetime.date(2023, 2, 1), datetime.date(2023, 2, 28)],
-            "Březen" : [datetime.date(2023, 3, 1), datetime.date(2023, 3, 31)],
-            "Duben" : [datetime.date(2023, 4, 1), datetime.date(2023, 4, 30)],
-            "Květen" : [datetime.date(2023, 5, 1), datetime.date(2023, 5, 31)],
-            "Červen" : [datetime.date(2023, 6, 1), datetime.date(2023, 6, 30)],
-            "Červenec" : [datetime.date(2023, 7, 1), datetime.date(2023, 7, 31)],
-            "Srpen" : [datetime.date(2023, 8, 1), datetime.date(2023, 8, 31)],
-            "Září" : [datetime.date(2022, 9, 1), datetime.date(2022, 9, 30)],
-            "Říjen" : [datetime.date(2022, 10, 1), datetime.date(2022, 10, 31)],
-            "Listopad" : [datetime.date(2022, 11, 1), datetime.date(2022, 11, 30)],
-            "Prosinec" : [datetime.date(2022, 12, 1), datetime.date(2022, 12, 31)],
+            "Leden": [datetime.date(2023, 1, 1), datetime.date(2023, 1, 31)],
+            "Únor": [datetime.date(2023, 2, 1), datetime.date(2023, 2, 28)],
+            "Březen": [datetime.date(2023, 3, 1), datetime.date(2023, 3, 31)],
+            "Duben": [datetime.date(2023, 4, 1), datetime.date(2023, 4, 30)],
+            "Květen": [datetime.date(2023, 5, 1), datetime.date(2023, 5, 31)],
+            "Červen": [datetime.date(2023, 6, 1), datetime.date(2023, 6, 30)],
+            "Červenec": [datetime.date(2023, 7, 1), datetime.date(2023, 7, 31)],
+            "Srpen": [datetime.date(2023, 8, 1), datetime.date(2023, 8, 31)],
+            "Září": [datetime.date(2022, 9, 1), datetime.date(2022, 9, 30)],
+            "Říjen": [datetime.date(2022, 10, 1), datetime.date(2022, 10, 31)],
+            "Listopad": [datetime.date(2022, 11, 1), datetime.date(2022, 11, 30)],
+            "Prosinec": [datetime.date(2022, 12, 1), datetime.date(2022, 12, 31)],
         }
-        mesic = col2.selectbox(
-            "Měsíc",
-            mesice.keys()
-        )
+        mesic = col2.selectbox("Měsíc", mesice.keys())
         vars["datumOd"] = mesice.get(mesic)[0].strftime("%d/%m/%Y").replace("/", ".")
         vars["datumDo"] = mesice.get(mesic)[1].strftime("%d/%m/%Y").replace("/", ".")
         vars.pop("semestr", None)
@@ -103,12 +100,16 @@ if idnos:
             st.subheader(idno)
             st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
             continue
-        
+
         try:
             ucitel = requests.get(
                 ucitel_url,
                 cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
-                params={"ucitIdno" : idno, "outputFormat": "CSV", "outputFormatEncoding": "utf-8"}
+                params={
+                    "ucitIdno": idno,
+                    "outputFormat": "CSV",
+                    "outputFormatEncoding": "utf-8",
+                },
             )
 
             ucit_data = ucitel.text
@@ -127,7 +128,9 @@ if idnos:
 
         df = pd.read_csv(StringIO(data), sep=";")
 
-        df.datum = pd.to_datetime(df.datum.apply(lambda x: x.replace(".", "/")), format = "%d/%m/%Y")
+        df.datum = pd.to_datetime(
+            df.datum.apply(lambda x: x.replace(".", "/")), format="%d/%m/%Y"
+        )
         df.sort_values(by=["datum", "hodinaSkutOd"], ascending=True, inplace=True)
         df.datum = df.datum.dt.strftime("%d/%m/%Y").apply(lambda x: x.replace("/", "."))
 
@@ -151,12 +154,14 @@ if idnos:
             (df["hodinaSkutDo"] - df["hodinaSkutOd"]).apply(lambda x: x.total_seconds())
             / 3600
         )
-        
+
         df["akce"] = df["kodPredmetu"].str.cat(
             df["nazev"].str.cat(df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "),
             sep="  ",
         )
-        df.loc[df["kodPredmetu"] == df["nazev"], "akce"] = df["kodPredmetu"].str.cat(df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  ")
+        df.loc[df["kodPredmetu"] == df["nazev"], "akce"] = df["kodPredmetu"].str.cat(
+            df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "
+        )
 
         st.subheader(f"{jmeno} {prijmeni} ({idno})")
 
@@ -186,20 +191,20 @@ if idnos:
             num_rows="dynamic",
         )
 
-        col1, col2 = st.columns([9,1])
+        col1, col2 = st.columns([9, 1])
 
         col1.metric("Počet hodin", sum(edited_df["pocetVyucHodin"].fillna(0)))
 
         buffer = BytesIO()
-        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-            df.to_excel(writer, sheet_name='Sheet1', index=False)
+        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+            df.to_excel(writer, sheet_name="Sheet1", index=False)
             writer.save()
 
             col2.download_button(
                 label="Stáhnout Excel",
                 data=buffer,
                 file_name=f"vykaz-{jmeno}-{prijmeni}-{idno}.xlsx",
-                mime="application/vnd.ms-excel"
+                mime="application/vnd.ms-excel",
             )
 
         col2.download_button(
