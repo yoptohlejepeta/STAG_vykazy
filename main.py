@@ -124,6 +124,7 @@ if idnos:
             cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
             params=vars,
         )
+
         data = rozvrh.text
 
         df = pd.read_csv(StringIO(data), sep=";")
@@ -197,7 +198,7 @@ if idnos:
 
         buffer = BytesIO()
         with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-            df.to_excel(writer, sheet_name="Sheet1", index=False)
+            edited_df.to_excel(writer, sheet_name="Sheet1", index=False)
             writer.save()
 
             col2.download_button(
