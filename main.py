@@ -128,7 +128,9 @@ if idnos:
             (df.denZkr == "So") | (df.denZkr == "Ne") & (~df.datum.isin(czech_holidays))
         ]
         df = df.loc[df["obsazeni"] > 0]
+
         df.reset_index(inplace=True)
+
         df["hodinaSkutOd"] = pd.to_datetime(df["hodinaSkutOd"], format="%H:%M")
         df["hodinaSkutDo"] = pd.to_datetime(df["hodinaSkutDo"], format="%H:%M")
         df["hodinaOdDo"] = (
@@ -136,7 +138,8 @@ if idnos:
             .dt.strftime("%H:%M")
             .str.cat(df["hodinaSkutDo"].dt.strftime("%H:%M"), sep="—")
         )
-        df["kodPredmetu"] = df["katedra"] + "/" + df["predmet"]
+
+        df["kodPredmetu"] = df["katedra"].str.cat(df["predmet"], sep = "/")
         df["pocetVyucHodin"] = df["pocetVyucHodin"].fillna(
             (df["hodinaSkutDo"] - df["hodinaSkutOd"]).apply(lambda x: x.total_seconds())
             / 3600
@@ -182,7 +185,7 @@ if idnos:
 
         col1, col2 = st.columns([9, 1])
 
-        col1.metric("Počet hodin", sum(edited_df["Počet hodin"].fillna(0)))
+        col1.metric("Celkem hodin", sum(edited_df["Počet hodin"].fillna(0)))
 
         buffer = BytesIO()
         with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
