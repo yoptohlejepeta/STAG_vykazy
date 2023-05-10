@@ -152,7 +152,7 @@ if idnos:
         df["pocetVyucHodin"] = df["pocetVyucHodin"].fillna(
             (df["hodinaSkutDo"] - df["hodinaSkutOd"]).apply(lambda x: x.total_seconds())
             / 3600
-        )
+        ).round().astype(int)
 
         df["akce"] = df["kodPredmetu"].str.cat(
             df["nazev"].str.cat(df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "),
