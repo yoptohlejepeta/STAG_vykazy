@@ -10,5 +10,4 @@ sloupce: datum, od do (hodina skutecna), pocet hodin, stag akce (spolecne, celyk
 
 * nuly před Idnem
 * někde jsou jmena přemětu kod
-* excel
-* jmeno vyucujicich
+s

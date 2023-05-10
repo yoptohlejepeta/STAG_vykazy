@@ -12,6 +12,15 @@ load_dotenv()
 
 st.set_page_config(layout="wide", page_title="STAG Výkazy", page_icon="📄")
 
+hide_table_row_index = """
+            <style>
+            thead tr th:first-child {display:none}
+            tbody th {display:none}
+            </style>
+            """
+
+st.markdown(hide_table_row_index, unsafe_allow_html=True)
+
 st.title("STAG Výkazy")
 
 rozvrh_url = "https://ws.ujep.cz/ws/services/rest2/rozvrhy/getRozvrhByUcitel"
@@ -93,7 +102,7 @@ else:
 
 
 if idnos:
-    for idno in idnos.replace(" ", "").split(","):
+    for idno in set(idnos.replace(" ", "").split(",")): # ???
         try:
             vars["ucitIdno"] = int(idno)
         except:
@@ -176,20 +185,21 @@ if idnos:
 
         df.columns = ["Datum", "Hodina od do", "Počet hodin", "Akce"]
 
-        edited_df = st.experimental_data_editor(
-            df,
-            use_container_width=True,
-            height=((len(df)) + 2) * 35 + 3,
-            num_rows="dynamic",
-        )
+        # edited_df = st.experimental_data_editor(
+        #     df,
+        #     use_container_width=True,
+        #     height=((len(df)) + 2) * 35 + 3,
+        #     num_rows="dynamic",
+        # )
+        st.table(df)
 
         col1, col2 = st.columns([9, 1])
 
-        col1.metric("Celkem hodin", sum(edited_df["Počet hodin"].fillna(0)))
+        col1.metric("Celkem hodin", sum(df["Počet hodin"].fillna(0)))
 
         buffer = BytesIO()
         with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-            edited_df.to_excel(writer, sheet_name="Sheet1", index=False)
+            df.to_excel(writer, sheet_name="Sheet1", index=False)
             writer.save()
 
             col2.download_button(
@@ -201,7 +211,7 @@ if idnos:
 
         col2.download_button(
             label="Stáhnout CSV",
-            data=edited_df.to_csv(index=False).encode("utf-8"),
+            data=df.to_csv(index=False).encode("utf-8"),
             file_name=f"vykaz-{jmeno}-{prijmeni}-{idno}.csv",
             mime="text/csv",
         )
