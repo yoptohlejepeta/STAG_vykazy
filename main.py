@@ -102,7 +102,7 @@ else:
 
 
 if idnos:
-    for idno in set(idnos.replace(" ", "").split(",")): # ???
+    for idno in list(dict.fromkeys(idnos.replace(" ", "").split(","))): # ???
         try:
             vars["ucitIdno"] = int(idno)
         except:
