@@ -162,7 +162,12 @@ if idnos:
             df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "
         )
 
-        st.subheader(f"{jmeno} {prijmeni} ({idno})")
+        hodiny_pocet = sum(df["pocetVyucHodin"].fillna(0))
+
+        if hodiny_pocet == 0:
+            st.subheader(f":red[{jmeno} {prijmeni}] ({idno})")
+        else:
+            st.subheader(f"{jmeno} {prijmeni} ({idno})")
 
         df = df[["datum", "hodinaOdDo", "pocetVyucHodin", "akce"]]
 
@@ -195,7 +200,7 @@ if idnos:
 
         col1, col2 = st.columns([9, 1])
 
-        col1.metric("Celkem hodin", sum(df["Počet hodin"].fillna(0)))
+        col1.metric("Celkem hodin", hodiny_pocet)
 
         buffer = BytesIO()
         with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
