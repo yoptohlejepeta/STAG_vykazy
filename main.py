@@ -165,7 +165,8 @@ if idnos:
         hodiny_pocet = sum(df["pocetVyucHodin"].fillna(0))
 
         if hodiny_pocet == 0:
-            st.subheader(f":red[{jmeno} {prijmeni}] ({idno})")
+            # st.subheader(f":blue[{jmeno} {prijmeni}] ({idno})")
+            st.markdown(f"<h2> <text style= color:grey;>{jmeno} {prijmeni}</text> ({idno}) </h2>", unsafe_allow_html=True)
         else:
             st.subheader(f"{jmeno} {prijmeni} ({idno})")
 
