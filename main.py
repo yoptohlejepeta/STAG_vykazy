@@ -166,7 +166,7 @@ if idnos:
 
         if hodiny_pocet == 0:
             # st.subheader(f":blue[{jmeno} {prijmeni}] ({idno})")
-            st.markdown(f"<h2> <text style= color:grey;>{jmeno} {prijmeni}</text> ({idno}) </h2>", unsafe_allow_html=True)
+            st.markdown(f"<h3> <text style= color:grey;>{jmeno} {prijmeni}</text> ({idno}) </h3>", unsafe_allow_html=True)
         else:
             st.subheader(f"{jmeno} {prijmeni} ({idno})")
 
