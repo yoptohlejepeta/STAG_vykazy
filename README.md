@@ -1,14 +1,13 @@
 # STAG_vykazy
 
-Výkaz výuky o víkendech + svátky (sobota/neděle, akce je obsazená, pocet vyucovacich hodin, slučování předmětů s časovým překryvem (liší se jenom kod)), časové rozmezí (rychle - měsíc), když je víc vyučujících -> vypsat ostatní
+Výkazy vyučujících UJEP. Zatím jen víkendy + svátky.
 
-1220
+## Odkaz
 
-sloupce: datum, od do (hodina skutecna), pocet hodin, stag akce (spolecne, celykod/nazev (typ akce pr, sem, cv) + dalsi)
+<https://stag-vykazy.streamlit.app/>
 
-## Chyby
+## TODO
 
 * nuly před Idnem
-* někde jsou jmena přemětu kod
 * vikendy/vsechny dny
 * odkazy
