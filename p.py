@@ -6,6 +6,7 @@ import pandas as pd
 from io import StringIO, BytesIO
 import holidays
 from dotenv import load_dotenv
+import polars as pl
 
 load_dotenv()
 
@@ -118,107 +119,105 @@ if idnos:
 
         data = rozvrh.text
 
-        df = pd.read_csv(StringIO(data), sep=";")
-        if df.empty:
+        df = pl.read_csv(StringIO(data), separator=";")
+        if df.is_empty():
             st.subheader(idno)
             st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
             continue
 
-        jmeno = df.loc[df.ucitIdno.astype(str) == idno]["jmeno.ucitel"].iloc[0]
-        prijmeni = df.loc[df.ucitIdno.astype(str) == idno]["prijmeni.ucitel"].iloc[0]
+        jmeno = df.filter(pl.col("ucitIdno").cast(str) == idno).select("jmeno.ucitel").item(0,0)
+        prijmeni = df.filter(pl.col("ucitIdno").cast(str) == idno).select("prijmeni.ucitel").item(0,0)
+        df.with_columns(
+            pl.col("datum").apply(lambda x: x.replace(".", "/")).str.to_datetime("%d/%m/%Y")
+        ).sort(["datum", "hodinaSkutOd"], descending=False)
+        st.write(df.inf)
+        # df.datum = df.datum.dt.strftime("%d/%m/%Y").apply(lambda x: x.replace("/", "."))
+        st.dataframe(df.to_pandas())
+        # df = df.loc[
+        #     (df.denZkr == "So") | (df.denZkr == "Ne") & (~df.datum.isin(czech_holidays))
+        # ]
+        # df = df.loc[df["obsazeni"] > 0]
 
-        df.datum = pd.to_datetime(
-            df.datum.apply(lambda x: x.replace(".", "/")), format="%d/%m/%Y"
-        )
-        df.sort_values(by=["datum", "hodinaSkutOd"], ascending=True, inplace=True)
-        df.datum = df.datum.dt.strftime("%d/%m/%Y").apply(lambda x: x.replace("/", "."))
+        # df.reset_index(inplace=True)
 
-        df = df.loc[
-            (df.denZkr == "So") | (df.denZkr == "Ne") & (~df.datum.isin(czech_holidays))
-        ]
-        df = df.loc[df["obsazeni"] > 0]
-
-        df.reset_index(inplace=True)
-
-        df["hodinaSkutOd"] = pd.to_datetime(df["hodinaSkutOd"], format="%H:%M")
-        df["hodinaSkutDo"] = pd.to_datetime(df["hodinaSkutDo"], format="%H:%M")
-        df["hodinaOdDo"] = (
-            df["hodinaSkutOd"]
-            .dt.strftime("%H:%M")
-            .str.cat(df["hodinaSkutDo"].dt.strftime("%H:%M"), sep="—")
-        )
-
-        df["kodPredmetu"] = df["katedra"].str.cat(df["predmet"], sep = "/")
-        df["pocetVyucHodin"] = df["pocetVyucHodin"].fillna(
-            (df["hodinaSkutDo"] - df["hodinaSkutOd"]).apply(lambda x: x.total_seconds())
-            / 3600
-        ).round().astype(int)
-
-        df["akce"] = df["kodPredmetu"].str.cat(
-            df["nazev"].str.cat(df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "),
-            sep="  ",
-        )
-        df.loc[df["kodPredmetu"] == df["nazev"], "akce"] = df["kodPredmetu"].str.cat(
-            df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "
-        )
-
-        df = df[["datum", "hodinaOdDo", "pocetVyucHodin", "akce"]]
-
-        try:
-            for i in range(len(df)):
-                row = df.iloc[i]
-                next_row = df.iloc[i + 1]
-                while (row["datum"] == next_row["datum"]) and (
-                    row["hodinaOdDo"] == next_row["hodinaOdDo"]
-                ):
-                    df.iloc[i, df.columns.get_loc("akce")] = " + ".join(
-                        [row["akce"], next_row["akce"]]
-                    )
-                    df.drop(labels=i + 1, inplace=True)
-                    df.reset_index(inplace=True, drop=True)
-                    next_row = df.iloc[i + 1]
-                    row = df.iloc[i]
-        except IndexError:
-            pass
-
-        df.columns = ["Datum", "Hodina od do", "Počet hodin", "Akce"]
-
-        # edited_df = st.experimental_data_editor(
-        #     df,
-        #     use_container_width=True,
-        #     height=((len(df)) + 2) * 35 + 3,
-        #     num_rows="dynamic",
+        # df["hodinaSkutOd"] = pd.to_datetime(df["hodinaSkutOd"], format="%H:%M")
+        # df["hodinaSkutDo"] = pd.to_datetime(df["hodinaSkutDo"], format="%H:%M")
+        # df["hodinaOdDo"] = (
+        #     df["hodinaSkutOd"]
+        #     .dt.strftime("%H:%M")
+        #     .str.cat(df["hodinaSkutDo"].dt.strftime("%H:%M"), sep="—")
         # )
-        st.table(df)
 
+        # df["kodPredmetu"] = df["katedra"].str.cat(df["predmet"], sep = "/")
+        # df["pocetVyucHodin"] = df["pocetVyucHodin"].fillna(
+        #     (df["hodinaSkutDo"] - df["hodinaSkutOd"]).apply(lambda x: x.total_seconds())
+        #     / 3600
+        # ).round().astype(int)
 
-        hodiny_pocet = sum(df["Počet hodin"].fillna(0))
+        # df["akce"] = df["kodPredmetu"].str.cat(
+        #     df["nazev"].str.cat(df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "),
+        #     sep="  ",
+        # )
+        # df.loc[df["kodPredmetu"] == df["nazev"], "akce"] = df["kodPredmetu"].str.cat(
+        #     df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "
+        # )
 
-        if hodiny_pocet == 0:
-            # st.subheader(f":blue[{jmeno} {prijmeni}] ({idno})")
-            st.markdown(f"<h3> <text style= color:grey;>{jmeno} {prijmeni}</text> ({idno}) </h3>", unsafe_allow_html=True)
-        else:
-            st.subheader(f"{jmeno} {prijmeni} ({idno})")
+        # hodiny_pocet = sum(df["pocetVyucHodin"].fillna(0))
 
-        col1, col2 = st.columns([9, 1])
+        # if hodiny_pocet == 0:
+        #     # st.subheader(f":blue[{jmeno} {prijmeni}] ({idno})")
+        #     st.markdown(f"<h3> <text style= color:grey;>{jmeno} {prijmeni}</text> ({idno}) </h3>", unsafe_allow_html=True)
+        # else:
+        #     st.subheader(f"{jmeno} {prijmeni} ({idno})")
 
-        col1.metric("Celkem hodin", hodiny_pocet)
+        # df = df[["datum", "hodinaOdDo", "pocetVyucHodin", "akce"]]
 
-        buffer = BytesIO()
-        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-            df.to_excel(writer, sheet_name="Sheet1", index=False)
-            writer.save()
+        # try:
+        #     for i in range(len(df)):
+        #         row = df.iloc[i]
+        #         next_row = df.iloc[i + 1]
+        #         while (row["datum"] == next_row["datum"]) and (
+        #             row["hodinaOdDo"] == next_row["hodinaOdDo"]
+        #         ):
+        #             df.iloc[i, df.columns.get_loc("akce")] = " + ".join(
+        #                 [row["akce"], next_row["akce"]]
+        #             )
+        #             df.drop(labels=i + 1, inplace=True)
+        #             df.reset_index(inplace=True, drop=True)
+        #             next_row = df.iloc[i + 1]
+        #             row = df.iloc[i]
+        # except IndexError:
+        #     pass
 
-            col2.download_button(
-                label="Stáhnout Excel",
-                data=buffer,
-                file_name=f"vykaz-{jmeno}-{prijmeni}-{idno}.xlsx",
-                mime="application/vnd.ms-excel",
-            )
+        # df.columns = ["Datum", "Hodina od do", "Počet hodin", "Akce"]
 
-        col2.download_button(
-            label="Stáhnout CSV",
-            data=df.to_csv(index=False).encode("utf-8"),
-            file_name=f"vykaz-{jmeno}-{prijmeni}-{idno}.csv",
-            mime="text/csv",
-        )
+        # # edited_df = st.experimental_data_editor(
+        # #     df,
+        # #     use_container_width=True,
+        # #     height=((len(df)) + 2) * 35 + 3,
+        # #     num_rows="dynamic",
+        # # )
+        # st.table(df)
+
+        # col1, col2 = st.columns([9, 1])
+
+        # col1.metric("Celkem hodin", hodiny_pocet)
+
+        # buffer = BytesIO()
+        # with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        #     df.to_excel(writer, sheet_name="Sheet1", index=False)
+        #     writer.save()
+
+        #     col2.download_button(
+        #         label="Stáhnout Excel",
+        #         data=buffer,
+        #         file_name=f"vykaz-{jmeno}-{prijmeni}-{idno}.xlsx",
+        #         mime="application/vnd.ms-excel",
+        #     )
+
+        # col2.download_button(
+        #     label="Stáhnout CSV",
+        #     data=df.to_csv(index=False).encode("utf-8"),
+        #     file_name=f"vykaz-{jmeno}-{prijmeni}-{idno}.csv",
+        #     mime="text/csv",
+        # )

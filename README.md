@@ -10,4 +10,5 @@ sloupce: datum, od do (hodina skutecna), pocet hodin, stag akce (spolecne, celyk
 
 * nuly před Idnem
 * někde jsou jmena přemětu kod
-* vikenz/ vsechny dny
+* vikendy/vsechny dny
+* odkazy
