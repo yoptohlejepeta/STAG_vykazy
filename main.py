@@ -183,15 +183,6 @@ if idnos:
 
         df.columns = ["Datum", "Hodina od do", "Počet hodin", "Akce"]
 
-        # edited_df = st.experimental_data_editor(
-        #     df,
-        #     use_container_width=True,
-        #     height=((len(df)) + 2) * 35 + 3,
-        #     num_rows="dynamic",
-        # )
-        st.table(df)
-
-
         hodiny_pocet = sum(df["Počet hodin"].fillna(0))
 
         if hodiny_pocet == 0:
@@ -199,6 +190,14 @@ if idnos:
             st.markdown(f"<h3> <text style= color:grey;>{jmeno} {prijmeni}</text> ({idno}) </h3>", unsafe_allow_html=True)
         else:
             st.subheader(f"{jmeno} {prijmeni} ({idno})")
+
+        # edited_df = st.experimental_data_editor(
+        #     df,
+        #     use_container_width=True,
+        #     height=((len(df)) + 2) * 35 + 3,
+        #     num_rows="dynamic",
+        # )
+        st.table(df)
 
         col1, col2 = st.columns([9, 1])
 
