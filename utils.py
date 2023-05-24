@@ -1,10 +1,12 @@
 import streamlit as st
 import pandas as pd
 import requests
-
 import datetime
 from io import StringIO, BytesIO
 import datetime
+
+
+ucitel_url = "https://ws.ujep.cz/ws/services/rest2/ucitel/getUcitelInfo"
 
 
 def get_month_days(year: int, month_name: str):
@@ -74,9 +76,26 @@ def get_excel(df):
         worksheet = workbook.add_worksheet()
         worksheet.merge_range("A1:D1", text)
         df.to_excel(writer, sheet_name="Sheet1", startrow=1, index=False)
-        writer.save()
 
     return buffer
+
+@st.cache_data(show_spinner=False, ttl=300)
+def get_vyucujici(idno):
+    rozvrh = requests.get(
+        ucitel_url,
+        cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
+        params={"ucitIdno": idno, "outputFormat": "CSV", "outputFormatEncoding": "utf-8"},
+    )
+
+    data = rozvrh.text
+    df = pd.read_csv(StringIO(data), sep=";")
+    jmeno = " ".join([df["jmeno"].iloc[0], df["prijmeni"].iloc[0]])
+    jmeno_tituly = get_tituly(
+        df["titulPred"].iloc[0], df["titulZa"].iloc[0], jmeno
+    )
+    
+    return jmeno, jmeno_tituly
+
 
 
 @st.cache_data(show_spinner=False, ttl=300)
@@ -92,16 +111,6 @@ def get_df(idno, url, holidays, vars, type):
 
     if df.empty:
         return df, None, None
-
-    filter_df = df.loc[df.ucitIdno == idno]
-    jmeno = " ".join(
-        [filter_df["jmeno.ucitel"].iloc[0], filter_df["prijmeni.ucitel"].iloc[0]]
-    )
-    jmeno_tituly = get_tituly(
-        filter_df["titulPred.ucitel"].iloc[0],
-        filter_df["titulZa.ucitel"].iloc[0],
-        jmeno,
-    )
 
     try:
         df.datum = pd.to_datetime(
@@ -174,4 +183,4 @@ def get_df(idno, url, holidays, vars, type):
     except IndexError:
         pass
 
-    return df, jmeno, jmeno_tituly
+    return df

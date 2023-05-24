@@ -4,9 +4,7 @@ import datetime
 import holidays
 from dotenv import load_dotenv
 
-from utils import get_df
-from utils import get_excel
-from utils import get_month_days
+from utils import get_df, get_excel, get_month_days, get_vyucujici
 
 load_dotenv()
 
@@ -154,9 +152,10 @@ if idnos:
                 st.markdown(custom_divider, unsafe_allow_html=True)
             continue
 
-        df, jmeno, jmeno_tituly = get_df(
+        df = get_df(
             idno, rozvrh_url, czech_holidays, vars, vikendy
         )
+        jmeno, jmeno_tituly = get_vyucujici(idno)
 
         if jmeno == None:
             st.subheader(idno)
