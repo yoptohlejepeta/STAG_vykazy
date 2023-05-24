@@ -34,7 +34,7 @@ def get_month_days(year, month_name):
     return first_day, last_day
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_df(idno, url, holidays, vars, rozsah):
     rozvrh = requests.get(
         url,
