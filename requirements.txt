@@ -1,6 +1,6 @@
 holidays==0.23
 pandas==1.5.3
-Requests==2.29.0
-streamlit==1.21.0
 python-dotenv==1.0.0
-xlsxwriter==3.1.0
+Requests==2.31.0
+streamlit==1.22.0
+xlsxwriter==3.1.1
