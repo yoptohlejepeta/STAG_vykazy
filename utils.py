@@ -73,7 +73,7 @@ def get_excel(df):
         workbook = writer.book
         worksheet = workbook.add_worksheet()
         worksheet.merge_range("A1:D1", text)
-        df.to_excel(writer, sheet_name="Sheet1", index=False)
+        df.to_excel(writer, sheet_name="Sheet1",startrow=1, index=False)
         writer.save()
 
     return buffer
