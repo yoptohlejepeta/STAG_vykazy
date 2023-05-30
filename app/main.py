@@ -8,6 +8,7 @@ import holidays
 from dotenv import load_dotenv
 
 from utils import get_df
+from utils import get_excel
 
 load_dotenv()
 
@@ -123,7 +124,6 @@ else:
         mesic = col3.selectbox("Měsíc", mesice.keys())
         vars["datumOd"] = mesice.get(mesic)[0].strftime("%d/%m/%Y").replace("/", ".")
         vars["datumDo"] = mesice.get(mesic)[1].strftime("%d/%m/%Y").replace("/", ".")
-
 # -----------------------------
 
 
@@ -148,7 +148,7 @@ if idnos:
                 st.markdown(custom_divider, unsafe_allow_html=True)
             continue
 
-        df, jmeno, prijmeni = get_df(idno, rozvrh_url, czech_holidays, vars, rozsah)
+        df, jmeno, jmeno_tituly = get_df(idno, rozvrh_url, czech_holidays, vars, rozsah)
 
         if jmeno == None:
             st.subheader(idno)
@@ -165,20 +165,20 @@ if idnos:
 
         if hodiny_pocet == 0:
             st.markdown(
-                f"<h3> <text style= color:grey;>{jmeno} {prijmeni}</text> ({idno}) <a id='{idno}'/></h3>",
+                f"<h3> <text style= color:grey;>{jmeno_tituly}</text> ({idno}) <a id='{idno}'/></h3>",
                 unsafe_allow_html=True,
             )
             with st.sidebar:
                 st.markdown(
-                    f"<a href = #{idno} style='color: grey; text-decoration: none; font-size: 1.5em;'><span style='transition: color 0.3s;'><s>{jmeno} {prijmeni}</s> ({idno})</span></a>",
+                    f"<a href = #{idno} style='color: grey; text-decoration: none; font-size: 1.5em;'><span style='transition: color 0.3s;'><s>{jmeno}</s> ({idno})</span></a>",
                     unsafe_allow_html=True,
                 )
                 st.markdown(custom_divider, unsafe_allow_html=True)
         else:
-            st.subheader(f"{jmeno} {prijmeni} ({idno})", anchor=f"{idno}")
+            st.subheader(f"{jmeno_tituly} ({idno})", anchor=f"{idno}")
             with st.sidebar:
                 st.markdown(
-                    f"<a href = #{idno} style='color: inherit; text-decoration: none; font-size: 1.5em;'><span style='transition: color 0.3s;'>{jmeno} {prijmeni} ({idno})</span></a>",
+                    f"<a href = #{idno} style='color: inherit; text-decoration: none; font-size: 1.5em;'><span style='transition: color 0.3s;'>{jmeno} ({idno})</span></a>",
                     unsafe_allow_html=True,
                 )
                 st.markdown(
@@ -193,22 +193,16 @@ if idnos:
         col1, col2, col3 = st.columns([9, 1, 1])
         col1.metric("Celkem hodin", hodiny_pocet)
 
-        # Export dataframů
-        buffer = BytesIO()
-        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-            df.to_excel(writer, sheet_name="Sheet1", index=False)
-            writer.save()
-
-            col2.download_button(
-                label="📥 Excel",
-                data=buffer,
-                file_name=f"vykaz-{jmeno}-{prijmeni}-{idno}.xlsx",
-                mime="application/vnd.ms-excel",
-            )
+        col2.download_button(
+            label="📥 Excel",
+            data=get_excel(df),
+            file_name=f"vykaz-{jmeno}-{idno}.xlsx",
+            mime="application/vnd.ms-excel",
+        )
 
         col3.download_button(
             label="📥 CSV",
             data=df.to_csv(index=False).encode("utf-8"),
-            file_name=f"vykaz-{jmeno}-{prijmeni}-{idno}.csv",
+            file_name=f"vykaz-{jmeno}-{idno}.csv",
             mime="text/csv",
         )

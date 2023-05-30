@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 import requests
-from dotenv import load_dotenv
+
+# from dotenv import load_dotenv
 import datetime
-from io import StringIO
+from io import StringIO, BytesIO
 import datetime
 
 
@@ -35,7 +36,51 @@ def get_month_days(year, month_name):
 
 
 @st.cache_data(show_spinner=False)
-def get_df(idno, url, holidays, vars, rozsah):
+def get_name(shortcut, department):
+    url = "https://ws.ujep.cz/ws/services/rest2/predmety/getPredmetInfo"
+    vars = {
+        "zkratka": shortcut,
+        "outputFormat": "CSV",
+        "katedra": department,
+        "outputFormatEncoding": "utf-8",
+    }
+
+    predmet = requests.get(
+        url,
+        cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
+        params=vars,
+    )
+
+    data = predmet.text
+    df = pd.read_csv(StringIO(data), sep=";")
+
+    return df["nazev"][0]
+
+@st.cache_data(show_spinner=False)
+def get_tituly(titul_pred, titul_po, jmeno):
+    name_tituly = " ".join([titul_pred, jmeno])
+    if str(titul_po) != "nan":
+        name_tituly = name_tituly + ", " + titul_po
+        return name_tituly
+    else:
+        return name_tituly
+
+@st.cache_data(show_spinner=False)
+def get_excel(df):
+    buffer = BytesIO()
+    with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+        text = "Výkaz za sobotní, případně nedělní výuku v kombinovaném studiu"
+        workbook = writer.book
+        worksheet = workbook.add_worksheet()
+        worksheet.merge_range("A1:D1", text)
+        df.to_excel(writer, sheet_name="Sheet1", index=False)
+        writer.save()
+
+    return buffer
+
+
+@st.cache_data(show_spinner=False)
+def get_df(idno, url, holidays, vars, type):
     rozvrh = requests.get(
         url,
         cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
@@ -48,8 +93,9 @@ def get_df(idno, url, holidays, vars, rozsah):
     if df.empty:
         return df, None, None
 
-    jmeno = df.loc[df.ucitIdno == idno]["jmeno.ucitel"].iloc[0]
-    prijmeni = df.loc[df.ucitIdno == idno]["prijmeni.ucitel"].iloc[0]
+    filter_df = df.loc[df.ucitIdno == idno]
+    jmeno = " ".join([filter_df["jmeno.ucitel"].iloc[0], filter_df["prijmeni.ucitel"].iloc[0]])
+    jmeno_tituly = get_tituly(filter_df["titulPred.ucitel"].iloc[0], filter_df["titulZa.ucitel"].iloc[0], jmeno)
 
     try:
         df.datum = pd.to_datetime(
@@ -58,9 +104,9 @@ def get_df(idno, url, holidays, vars, rozsah):
     except:
         pass
     df.sort_values(by=["datum", "hodinaSkutOd"], ascending=True, inplace=True)
-    df.datum = df.datum.dt.strftime("%d/%m/%Y").apply(lambda x: x.replace("/", "."))
+    df.datum = df.datum.dt.strftime("%d/%m/%Y").apply(lambda x: x.replace("/", ". "))
 
-    if rozsah == "Víkendy + svátky":
+    if type == "Víkendy + svátky":
         df = df.loc[
             (df.denZkr == "So") | (df.denZkr == "Ne") & (~df.datum.isin(holidays))
         ]
@@ -68,12 +114,16 @@ def get_df(idno, url, holidays, vars, rozsah):
 
     df.reset_index(inplace=True)
 
+    df["typAkceZkr"].replace(
+        {"Zápočet": "Zp", "Zkouška": "Zk", "Záp. před zk.": "Zpz"}, inplace=True
+    )
+
     df["hodinaSkutOd"] = pd.to_datetime(df["hodinaSkutOd"], format="%H:%M")
     df["hodinaSkutDo"] = pd.to_datetime(df["hodinaSkutDo"], format="%H:%M")
     df["hodinaOdDo"] = (
         df["hodinaSkutOd"]
         .dt.strftime("%H:%M")
-        .str.cat(df["hodinaSkutDo"].dt.strftime("%H:%M"), sep="—")
+        .str.cat(df["hodinaSkutDo"].dt.strftime("%H:%M"), sep="–")
     )
 
     df["kodPredmetu"] = df["katedra"].str.cat(df["predmet"].astype("str"), sep="/")
@@ -87,12 +137,14 @@ def get_df(idno, url, holidays, vars, rozsah):
         .astype(int)
     )
 
+    # U zápočtů a zkoušek je místo názvu přemětu pouze kód.
+    for index, row in df.iterrows():
+        if row["kodPredmetu"] == row["nazev"]:
+            df.at[index, "nazev"] = get_name(row["predmet"], row["katedra"])
+
     df["akce"] = df["kodPredmetu"].str.cat(
         df["nazev"].str.cat(df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "),
         sep="  ",
-    )
-    df.loc[df["kodPredmetu"] == df["nazev"], "akce"] = df["kodPredmetu"].str.cat(
-        df["typAkceZkr"].apply(lambda x: f"({x})"), sep="  "
     )
 
     try:
@@ -112,4 +164,4 @@ def get_df(idno, url, holidays, vars, rozsah):
     except IndexError:
         pass
 
-    return df, jmeno, prijmeni
+    return df, jmeno, jmeno_tituly
