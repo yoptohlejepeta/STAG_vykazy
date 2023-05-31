@@ -148,7 +148,7 @@ if idnos:
                 st.markdown(custom_divider, unsafe_allow_html=True)
             continue
 
-        df, jmeno, jmeno_tituly = get_df(idno, rozvrh_url, czech_holidays, vars, rozsah)
+        df, jmeno = get_df(idno, rozvrh_url, czech_holidays, vars, rozsah)
 
         if jmeno == None:
             st.subheader(idno)
@@ -165,7 +165,7 @@ if idnos:
 
         if hodiny_pocet == 0:
             st.markdown(
-                f"<h3> <text style= color:grey;>{jmeno_tituly}</text> ({idno}) <a id='{idno}'/></h3>",
+                f"<h3> <text style= color:grey;>{jmeno}</text> ({idno}) <a id='{idno}'/></h3>",
                 unsafe_allow_html=True,
             )
             with st.sidebar:
@@ -175,7 +175,7 @@ if idnos:
                 )
                 st.markdown(custom_divider, unsafe_allow_html=True)
         else:
-            st.subheader(f"{jmeno_tituly} ({idno})", anchor=f"{idno}")
+            st.subheader(f"{jmeno} ({idno})", anchor=f"{idno}")
             with st.sidebar:
                 st.markdown(
                     f"<a href = #{idno} style='color: inherit; text-decoration: none; font-size: 1.5em;'><span style='transition: color 0.3s;'>{jmeno} ({idno})</span></a>",

@@ -95,7 +95,7 @@ def get_df(idno, url, holidays, vars, type):
 
     filter_df = df.loc[df.ucitIdno == idno]
     jmeno = " ".join([filter_df["jmeno.ucitel"].iloc[0], filter_df["prijmeni.ucitel"].iloc[0]])
-    jmeno_tituly = get_tituly(filter_df["titulPred.ucitel"].iloc[0], filter_df["titulZa.ucitel"].iloc[0], jmeno)
+    # jmeno_tituly = get_tituly(filter_df["titulPred.ucitel"].iloc[0], filter_df["titulZa.ucitel"].iloc[0], jmeno)
 
     try:
         df.datum = pd.to_datetime(
@@ -164,4 +164,4 @@ def get_df(idno, url, holidays, vars, type):
     except IndexError:
         pass
 
-    return df, jmeno, jmeno_tituly
+    return df, jmeno
