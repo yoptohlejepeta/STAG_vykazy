@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import requests
 
-# from dotenv import load_dotenv
 import datetime
 from io import StringIO, BytesIO
 import datetime
@@ -35,7 +34,7 @@ def get_month_days(year, month_name):
     return first_day, last_day
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=300)
 def get_name(shortcut, department):
     url = "https://ws.ujep.cz/ws/services/rest2/predmety/getPredmetInfo"
     vars = {
@@ -56,16 +55,15 @@ def get_name(shortcut, department):
 
     return df["nazev"][0]
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=300)
 def get_tituly(titul_pred, titul_po, jmeno):
-    name_tituly = " ".join([titul_pred, jmeno])
+    if str(titul_pred) != "nan":
+        jmeno = titul_pred + " " + jmeno
     if str(titul_po) != "nan":
-        name_tituly = name_tituly + ", " + titul_po
-        return name_tituly
-    else:
-        return name_tituly
+        jmeno = jmeno + ", " + titul_po
+    return jmeno
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=300)
 def get_excel(df):
     buffer = BytesIO()
     with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
@@ -79,7 +77,7 @@ def get_excel(df):
     return buffer
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=300)
 def get_df(idno, url, holidays, vars, type):
     rozvrh = requests.get(
         url,
@@ -95,7 +93,7 @@ def get_df(idno, url, holidays, vars, type):
 
     filter_df = df.loc[df.ucitIdno == idno]
     jmeno = " ".join([filter_df["jmeno.ucitel"].iloc[0], filter_df["prijmeni.ucitel"].iloc[0]])
-    # jmeno_tituly = get_tituly(filter_df["titulPred.ucitel"].iloc[0], filter_df["titulZa.ucitel"].iloc[0], jmeno)
+    jmeno_tituly = get_tituly(filter_df["titulPred.ucitel"].iloc[0], filter_df["titulZa.ucitel"].iloc[0], jmeno)
 
     try:
         df.datum = pd.to_datetime(
@@ -164,4 +162,4 @@ def get_df(idno, url, holidays, vars, type):
     except IndexError:
         pass
 
-    return df, jmeno
+    return df, jmeno, jmeno_tituly

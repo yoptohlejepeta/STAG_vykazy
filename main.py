@@ -18,7 +18,6 @@ st.title("STAG Výkazy")
 
 
 # Dodatečné CSS
-# -----------------------------
 hide_table_row_index = """
             <style>
             thead tr th:first-child {display:none}
@@ -53,11 +52,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 custom_divider = '<div class="custom-divider"></div>'
-# -----------------------------
 
 
 # Proměnné
-# -----------------------------
 rozvrh_url = "https://ws.ujep.cz/ws/services/rest2/rozvrhy/getRozvrhByUcitel"
 ucitel_url = "https://ws.ujep.cz/ws/services/rest2/ucitel/getUcitelInfo"
 czech_holidays = holidays.CZ(years=2023)
@@ -85,10 +82,8 @@ mesice = {
     "Listopad": [datetime.date(2022, 11, 1), datetime.date(2022, 11, 30)],
     "Prosinec": [datetime.date(2022, 12, 1), datetime.date(2022, 12, 31)],
 }
-# -----------------------------
 
 # Výběr parametrů
-# -----------------------------
 # Ticket z headeru
 if "stagUserTicket" not in st.session_state:
     ticket = st.experimental_get_query_params().get("stagUserTicket")
@@ -124,7 +119,6 @@ else:
         mesic = col3.selectbox("Měsíc", mesice.keys())
         vars["datumOd"] = mesice.get(mesic)[0].strftime("%d/%m/%Y").replace("/", ".")
         vars["datumDo"] = mesice.get(mesic)[1].strftime("%d/%m/%Y").replace("/", ".")
-# -----------------------------
 
 
 if idnos:
@@ -148,7 +142,7 @@ if idnos:
                 st.markdown(custom_divider, unsafe_allow_html=True)
             continue
 
-        df, jmeno = get_df(idno, rozvrh_url, czech_holidays, vars, rozsah)
+        df, jmeno, jmeno_tituly = get_df(idno, rozvrh_url, czech_holidays, vars, rozsah)
 
         if jmeno == None:
             st.subheader(idno)
@@ -156,7 +150,6 @@ if idnos:
             continue
 
         # Tabulka
-        # -----------------------------
         # Přejmenování sloupců kvůli výstupu
         df = df[["datum", "hodinaOdDo", "pocetVyucHodin", "akce"]]
         df.columns = ["Datum", "Hodina od do", "Počet hodin", "Akce"]
@@ -165,7 +158,7 @@ if idnos:
 
         if hodiny_pocet == 0:
             st.markdown(
-                f"<h3> <text style= color:grey;>{jmeno}</text> ({idno}) <a id='{idno}'/></h3>",
+                f"<h3> <text style= color:grey;>{jmeno_tituly}</text> ({idno}) <a id='{idno}'/></h3>",
                 unsafe_allow_html=True,
             )
             with st.sidebar:
@@ -175,7 +168,7 @@ if idnos:
                 )
                 st.markdown(custom_divider, unsafe_allow_html=True)
         else:
-            st.subheader(f"{jmeno} ({idno})", anchor=f"{idno}")
+            st.subheader(f"{jmeno_tituly} ({idno})", anchor=f"{idno}")
             with st.sidebar:
                 st.markdown(
                     f"<a href = #{idno} style='color: inherit; text-decoration: none; font-size: 1.5em;'><span style='transition: color 0.3s;'>{jmeno} ({idno})</span></a>",
@@ -186,10 +179,8 @@ if idnos:
                 )
 
         st.table(df)
-        # -----------------------------
 
         # Část pod tabulkou
-        # -----------------------------
         col1, col2, col3 = st.columns([9, 1, 1])
         col1.metric("Celkem hodin", hodiny_pocet)
 
