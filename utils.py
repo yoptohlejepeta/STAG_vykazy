@@ -123,8 +123,13 @@ def get_df(idno, url, holidays, vars, type):
         .dt.strftime("%H:%M")
         .str.cat(df["hodinaSkutDo"].dt.strftime("%H:%M"), sep="–")
     )
+    try:
+        df["kodPredmetu"] = df["katedra"].str.cat(df["predmet"].astype("str"), sep="/")
+    except:
+        # Někde není vyplněna katedra. (např. idno: 2317, červen 2023)
+        df["kodPredmetu"] = df["predmet"]
 
-    df["kodPredmetu"] = df["katedra"].str.cat(df["predmet"].astype("str"), sep="/")
+
     df["pocetVyucHodin"] = (
         df["pocetVyucHodin"]
         .fillna(
