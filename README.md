@@ -9,8 +9,5 @@ Výkazy vyučujících UJEP. Zatím jen víkendy + svátky.
 ## TODO
 
 * nuly před Idnem
-* odkazy
 * optimalizace textu akce
 * plny nazev predmetu
-
-Vykaz (soucet hodin, kratsi pomlcka, jednomistne hodiny s teckou)
