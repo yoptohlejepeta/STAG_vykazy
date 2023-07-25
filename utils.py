@@ -7,7 +7,7 @@ from io import StringIO, BytesIO
 import datetime
 
 
-def get_month_days(year, month_name):
+def get_month_days(year: int, month_name: str):
     month_names_czech = {
         "Leden": 1,
         "Únor": 2,
@@ -23,15 +23,13 @@ def get_month_days(year, month_name):
         "Prosinec": 12,
     }
 
-    month = month_names_czech.get(month_name.lower())
-    if month is None:
-        return None, None
+    month = month_names_czech.get(month_name)
 
     first_day = datetime.date(year, month, 1)
     next_month = first_day.replace(day=28) + datetime.timedelta(days=4)
     last_day = next_month - datetime.timedelta(days=next_month.day)
 
-    return first_day, last_day
+    return first_day.strftime("%d/%m/%Y").replace("/", "."), last_day.strftime("%d/%m/%Y").replace("/", ".")
 
 
 @st.cache_data(show_spinner=False, ttl=300)

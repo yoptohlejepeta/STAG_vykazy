@@ -1,14 +1,12 @@
 import streamlit as st
-import requests
 import os
 import datetime
-import pandas as pd
-from io import StringIO, BytesIO
 import holidays
 from dotenv import load_dotenv
 
 from utils import get_df
 from utils import get_excel
+from utils import get_month_days
 
 load_dotenv()
 
@@ -33,6 +31,14 @@ hover_css = """
     </style>
     """
 
+hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.markdown(hide_table_row_index, unsafe_allow_html=True)
 st.markdown(hover_css, unsafe_allow_html=True)
 
@@ -68,20 +74,19 @@ vars = {
     "rok": 2022,
     "outputFormatEncoding": "utf-8",
 }
-mesice = {
-    "Leden": [datetime.date(2023, 1, 1), datetime.date(2023, 1, 31)],
-    "Únor": [datetime.date(2023, 2, 1), datetime.date(2023, 2, 28)],
-    "Březen": [datetime.date(2023, 3, 1), datetime.date(2023, 3, 31)],
-    "Duben": [datetime.date(2023, 4, 1), datetime.date(2023, 4, 30)],
-    "Květen": [datetime.date(2023, 5, 1), datetime.date(2023, 5, 31)],
-    "Červen": [datetime.date(2023, 6, 1), datetime.date(2023, 6, 30)],
-    "Červenec": [datetime.date(2023, 7, 1), datetime.date(2023, 7, 31)],
-    "Srpen": [datetime.date(2023, 8, 1), datetime.date(2023, 8, 31)],
-    "Září": [datetime.date(2022, 9, 1), datetime.date(2022, 9, 30)],
-    "Říjen": [datetime.date(2022, 10, 1), datetime.date(2022, 10, 31)],
-    "Listopad": [datetime.date(2022, 11, 1), datetime.date(2022, 11, 30)],
-    "Prosinec": [datetime.date(2022, 12, 1), datetime.date(2022, 12, 31)],
-}
+
+mesice = ["Leden",
+          "Únor",
+          "Březen",
+          "Duben",
+          "Květen",
+          "Červen",
+          "Červenec",
+          "Srpen",
+          "Září",
+          "Říjen",
+          "Listopad",
+          "Prosinec"]
 
 # Výběr parametrů
 # Ticket z headeru
@@ -89,7 +94,7 @@ if "stagUserTicket" not in st.session_state:
     ticket = st.experimental_get_query_params().get("stagUserTicket")
     st.session_state["stagUserTicket"] = ticket
 
-# Pokud není tiket -> login stránka
+# Pokud není ticket -> login stránka
 if not st.session_state["stagUserTicket"]:
     idnos = None
     login_url = os.getenv("LOGIN_URL")
@@ -105,9 +110,7 @@ else:
     if typ == "Datum od do":
         datum = col3.date_input(
             label="Datum",
-            value=[datetime.date(2022, 9, 19), datetime.date(2023, 9, 30)],
-            min_value=datetime.date(2022, 9, 19),
-            max_value=datetime.date(2023, 9, 30),
+            value=[datetime.date.today(), datetime.date.today()],
         )
         try:
             vars["datumOd"] = datum[0].strftime("%d/%m/%Y").replace("/", ".")
@@ -116,9 +119,11 @@ else:
             pass
         vars.pop("semestr", None)
     elif typ == "Podle měsíce":
-        mesic = col3.selectbox("Měsíc", mesice.keys())
-        vars["datumOd"] = mesice.get(mesic)[0].strftime("%d/%m/%Y").replace("/", ".")
-        vars["datumDo"] = mesice.get(mesic)[1].strftime("%d/%m/%Y").replace("/", ".")
+        mesic = col3.selectbox("Měsíc", mesice)
+        rok = col3.selectbox("Rok", [2022, 2023, 2024])
+        # vars["datumOd"] = mesice.get(mesic)[0].strftime("%d/%m/%Y").replace("/", ".")
+        # vars["datumDo"] = mesice.get(mesic)[1].strftime("%d/%m/%Y").replace("/", ".")
+        vars["datumOd"], vars["datumDo"] = get_month_days(year=rok, month_name=mesic)
 
 
 if idnos:
