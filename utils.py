@@ -29,7 +29,9 @@ def get_month_days(year: int, month_name: str):
     next_month = first_day.replace(day=28) + datetime.timedelta(days=4)
     last_day = next_month - datetime.timedelta(days=next_month.day)
 
-    return first_day.strftime("%d/%m/%Y").replace("/", "."), last_day.strftime("%d/%m/%Y").replace("/", ".")
+    return first_day.strftime("%d/%m/%Y").replace("/", "."), last_day.strftime(
+        "%d/%m/%Y"
+    ).replace("/", ".")
 
 
 @st.cache_data(show_spinner=False, ttl=300)
@@ -53,6 +55,7 @@ def get_name(shortcut, department):
 
     return df["nazev"][0]
 
+
 @st.cache_data(show_spinner=False, ttl=300)
 def get_tituly(titul_pred, titul_po, jmeno):
     if str(titul_pred) != "nan":
@@ -60,6 +63,7 @@ def get_tituly(titul_pred, titul_po, jmeno):
     if str(titul_po) != "nan":
         jmeno = jmeno + ", " + titul_po
     return jmeno
+
 
 @st.cache_data(show_spinner=False, ttl=300)
 def get_excel(df):
@@ -69,7 +73,7 @@ def get_excel(df):
         workbook = writer.book
         worksheet = workbook.add_worksheet()
         worksheet.merge_range("A1:D1", text)
-        df.to_excel(writer, sheet_name="Sheet1",startrow=1, index=False)
+        df.to_excel(writer, sheet_name="Sheet1", startrow=1, index=False)
         writer.save()
 
     return buffer
@@ -90,8 +94,14 @@ def get_df(idno, url, holidays, vars, type):
         return df, None, None
 
     filter_df = df.loc[df.ucitIdno == idno]
-    jmeno = " ".join([filter_df["jmeno.ucitel"].iloc[0], filter_df["prijmeni.ucitel"].iloc[0]])
-    jmeno_tituly = get_tituly(filter_df["titulPred.ucitel"].iloc[0], filter_df["titulZa.ucitel"].iloc[0], jmeno)
+    jmeno = " ".join(
+        [filter_df["jmeno.ucitel"].iloc[0], filter_df["prijmeni.ucitel"].iloc[0]]
+    )
+    jmeno_tituly = get_tituly(
+        filter_df["titulPred.ucitel"].iloc[0],
+        filter_df["titulZa.ucitel"].iloc[0],
+        jmeno,
+    )
 
     try:
         df.datum = pd.to_datetime(
@@ -102,7 +112,7 @@ def get_df(idno, url, holidays, vars, type):
     df.sort_values(by=["datum", "hodinaSkutOd"], ascending=True, inplace=True)
     df.datum = df.datum.dt.strftime("%d/%m/%Y").apply(lambda x: x.replace("/", ". "))
 
-    if type == "Víkendy + svátky":
+    if type:
         df = df.loc[
             (df.denZkr == "So") | (df.denZkr == "Ne") & (~df.datum.isin(holidays))
         ]
@@ -126,7 +136,6 @@ def get_df(idno, url, holidays, vars, type):
     except:
         # Někde není vyplněna katedra. (např. idno: 2317, červen 2023)
         df["kodPredmetu"] = df["predmet"]
-
 
     df["pocetVyucHodin"] = (
         df["pocetVyucHodin"]

@@ -26,7 +26,7 @@ hide_table_row_index = """
 hover_css = """
     <style>
         a span:hover {
-            color: #FF4B4B; /* Replace with your desired hover color */
+            color: #FF4B4B;
         }
     </style>
     """
@@ -75,18 +75,20 @@ vars = {
     "outputFormatEncoding": "utf-8",
 }
 
-mesice = ["Leden",
-          "Únor",
-          "Březen",
-          "Duben",
-          "Květen",
-          "Červen",
-          "Červenec",
-          "Srpen",
-          "Září",
-          "Říjen",
-          "Listopad",
-          "Prosinec"]
+mesice = [
+    "Leden",
+    "Únor",
+    "Březen",
+    "Duben",
+    "Květen",
+    "Červen",
+    "Červenec",
+    "Srpen",
+    "Září",
+    "Říjen",
+    "Listopad",
+    "Prosinec",
+]
 
 # Výběr parametrů
 # Ticket z headeru
@@ -104,7 +106,12 @@ else:
         "Idno vyučujícího", placeholder="Zadejte Idno vyučujících oddělené čárkami"
     )
     col1, col2, col3 = st.columns(3)
-    rozsah = col1.radio("Rozsah výkazů", ["Víkendy + svátky", "Všechny dny"])
+    # rozsah = col1.radio("Rozsah výkazů", ["Víkendy + svátky", "Všechny dny"])
+    vikendy = col1.toggle(
+        "Víkendy + svátky",
+        value=True,
+        help="Zobrazí pouze víkendy a svátky. Pokud je vypnuto, zobrazí všechny dny.",
+    )
     typ = col2.radio("Časové období", ["Podle měsíce", "Datum od do"])
 
     if typ == "Datum od do":
@@ -147,7 +154,9 @@ if idnos:
                 st.markdown(custom_divider, unsafe_allow_html=True)
             continue
 
-        df, jmeno, jmeno_tituly = get_df(idno, rozvrh_url, czech_holidays, vars, rozsah)
+        df, jmeno, jmeno_tituly = get_df(
+            idno, rozvrh_url, czech_holidays, vars, vikendy
+        )
 
         if jmeno == None:
             st.subheader(idno)
