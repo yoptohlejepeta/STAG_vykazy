@@ -97,7 +97,7 @@ if "stagUserTicket" not in st.session_state:
     st.session_state["stagUserTicket"] = ticket
 
 # Pokud není ticket -> login stránka
-if not st.session_state["stagUserTicket"]:
+if not st.session_state["stagUserTicket"] or st.session_state["stagUserTicket"][0] == "anonymous":
     idnos = None
     login_url = os.getenv("LOGIN_URL")
     st.header(f"Přihlašte se pomocí [Stagu]({login_url})")
@@ -127,7 +127,7 @@ else:
         vars.pop("semestr", None)
     elif typ == "Podle měsíce":
         mesic = col3.selectbox("Měsíc", mesice)
-        rok = col3.selectbox("Rok", [2022, 2023, 2024])
+        rok = col3.selectbox("Rok", [datetime.datetime.now().year - i for i in range(3)])
         # vars["datumOd"] = mesice.get(mesic)[0].strftime("%d/%m/%Y").replace("/", ".")
         # vars["datumDo"] = mesice.get(mesic)[1].strftime("%d/%m/%Y").replace("/", ".")
         vars["datumOd"], vars["datumDo"] = get_month_days(year=rok, month_name=mesic)
