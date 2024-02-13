@@ -1,6 +1,6 @@
-# STAG_vykazy
+# STAG výkazy
 
-Aplikace na zobrazení vyučujících na UJEP.
+Aplikace slouží k zobrazení výuky vyučujícíh na UJEP.
 K dispozici zobrazení výuky za všechny dny, nebo pouze za víkendy a svátky.
 
 ## Odkaz
