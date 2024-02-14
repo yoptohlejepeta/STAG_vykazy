@@ -11,5 +11,4 @@ K dispozici zobrazení výuky za všechny dny, nebo pouze za víkendy a svátky.
 
 * nuly před Idnem
 * optimalizace textu akce
-* plny nazev predmetu
 * roky

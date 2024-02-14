@@ -36,6 +36,7 @@ hide_streamlit_style = """
             </style>
             """
 
+# TODO: nastavit menu
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 st.markdown(hide_table_row_index, unsafe_allow_html=True)
 st.markdown(hover_css, unsafe_allow_html=True)
