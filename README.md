@@ -7,8 +7,15 @@ K dispozici zobrazení výuky za všechny dny, nebo pouze za víkendy a svátky.
 
 <https://stag-vykazy.streamlit.app/>
 
+## Použité služby
+
+<https://ws.ujep.cz/ws/services/rest2/rozvrhy/getRozvrhByUcitel>
+<https://ws.ujep.cz/ws/services/rest2/ucitel/getUcitelInfo>
+<https://ws.ujep.cz/ws/services/rest2/predmety/getPredmetInfo>
+
 ## TODO
 
-* nuly před Idnem
-* optimalizace textu akce
-* roky
+- [ ] vice roli <https://is-stag.zcu.cz/napoveda/web-services/ws_prihlasovani.html>
+- nuly před Idnem
+- optimalizace textu akce
+- roky

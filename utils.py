@@ -79,23 +79,25 @@ def get_excel(df):
 
     return buffer
 
+
 @st.cache_data(show_spinner=False, ttl=300)
 def get_vyucujici(idno):
     rozvrh = requests.get(
         ucitel_url,
         cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
-        params={"ucitIdno": idno, "outputFormat": "CSV", "outputFormatEncoding": "utf-8"},
+        params={
+            "ucitIdno": idno,
+            "outputFormat": "CSV",
+            "outputFormatEncoding": "utf-8",
+        },
     )
 
     data = rozvrh.text
     df = pd.read_csv(StringIO(data), sep=";")
     jmeno = " ".join([df["jmeno"].iloc[0], df["prijmeni"].iloc[0]])
-    jmeno_tituly = get_tituly(
-        df["titulPred"].iloc[0], df["titulZa"].iloc[0], jmeno
-    )
-    
-    return jmeno, jmeno_tituly
+    jmeno_tituly = get_tituly(df["titulPred"].iloc[0], df["titulZa"].iloc[0], jmeno)
 
+    return jmeno, jmeno_tituly
 
 
 @st.cache_data(show_spinner=False, ttl=300)
@@ -129,8 +131,8 @@ def get_df(idno, url, holidays, vars, type):
 
     df.reset_index(inplace=True)
 
-    df["typAkceZkr"].replace(
-        {"Zápočet": "Zp", "Zkouška": "Zk", "Záp. před zk.": "Zpz"}, inplace=True
+    df["typAkceZkr"] = df["typAkceZkr"].replace(
+        {"Zápočet": "Zp", "Zkouška": "Zk", "Záp. před zk.": "Zpz"}
     )
 
     df["hodinaSkutOd"] = pd.to_datetime(df["hodinaSkutOd"], format="%H:%M")

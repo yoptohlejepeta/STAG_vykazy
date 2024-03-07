@@ -92,11 +92,14 @@ mesice = [
 # Výběr parametrů
 # Ticket z headeru
 if "stagUserTicket" not in st.session_state:
-    ticket = st.experimental_get_query_params().get("stagUserTicket")
+    ticket = st.query_params.get_all("stagUserTicket")
     st.session_state["stagUserTicket"] = ticket
 
 # Pokud není ticket -> login stránka
-if not st.session_state["stagUserTicket"] or st.session_state["stagUserTicket"][0] == "anonymous":
+if (
+    not st.session_state["stagUserTicket"]
+    or st.session_state["stagUserTicket"][0] == "anonymous"
+):
     idnos = None
     login_url = os.getenv("LOGIN_URL")
     st.header(f"Přihlašte se pomocí [Stagu]({login_url})")
@@ -126,9 +129,9 @@ else:
         vars.pop("semestr", None)
     elif typ == "Podle měsíce":
         mesic = col3.selectbox("Měsíc", mesice)
-        rok = col3.selectbox("Rok", [datetime.datetime.now().year - i for i in range(3)])
-        # vars["datumOd"] = mesice.get(mesic)[0].strftime("%d/%m/%Y").replace("/", ".")
-        # vars["datumDo"] = mesice.get(mesic)[1].strftime("%d/%m/%Y").replace("/", ".")
+        rok = col3.selectbox(
+            "Rok", [datetime.datetime.now().year - i for i in range(3)]
+        )
         vars["datumOd"], vars["datumDo"] = get_month_days(year=rok, month_name=mesic)
 
 
@@ -153,9 +156,7 @@ if idnos:
                 st.markdown(custom_divider, unsafe_allow_html=True)
             continue
 
-        df = get_df(
-            idno, rozvrh_url, czech_holidays, vars, vikendy
-        )
+        df = get_df(idno, rozvrh_url, czech_holidays, vars, vikendy)
         jmeno, jmeno_tituly = get_vyucujici(idno)
 
         if jmeno == None:
@@ -192,7 +193,10 @@ if idnos:
                     '<div class="custom-divider"></div>', unsafe_allow_html=True
                 )
 
-        st.table(df)
+        if df.empty:
+            st.info("Žádná výuka.", icon="ℹ️")
+        else:
+            st.table(df)
 
         # Část pod tabulkou
         col1, col2, col3 = st.columns([9, 1, 1])
