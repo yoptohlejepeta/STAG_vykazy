@@ -4,6 +4,8 @@ import requests
 import datetime
 from io import StringIO, BytesIO
 import datetime
+import base64
+import json
 
 
 ucitel_url = "https://ws.ujep.cz/ws/services/rest2/ucitel/getUcitelInfo"
@@ -86,6 +88,7 @@ def get_vyucujici(idno):
         ucitel_url,
         cookies={"WSCOOKIE": st.session_state["stagUserTicket"][0]},
         params={
+            "stagUser": st.session_state["my_role"],
             "ucitIdno": idno,
             "outputFormat": "CSV",
             "outputFormatEncoding": "utf-8",
@@ -94,6 +97,7 @@ def get_vyucujici(idno):
 
     data = rozvrh.text
     df = pd.read_csv(StringIO(data), sep=";")
+
     jmeno = " ".join([df["jmeno"].iloc[0], df["prijmeni"].iloc[0]])
     jmeno_tituly = get_tituly(df["titulPred"].iloc[0], df["titulZa"].iloc[0], jmeno)
 
@@ -186,3 +190,20 @@ def get_df(idno, url, holidays, vars, type):
         pass
 
     return df
+
+
+def get_user_info(info_encoded: str):
+    padding_needed = 4 - len(info_encoded) % 4
+
+    info_encoded += '=' * padding_needed
+    decoded = base64.b64decode(info_encoded)
+    clean_decoded = decoded.decode('utf-8', errors='ignore')
+
+    info = json.loads(clean_decoded)
+
+    # roles = [{role["role"]: role["userName"]} for role in info["stagUserInfo"]]
+    roles = {}
+    for role in info["stagUserInfo"]:
+        roles[role["role"]] = role["userName"]
+    
+    return roles

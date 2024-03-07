@@ -4,7 +4,7 @@ import datetime
 import holidays
 from dotenv import load_dotenv
 
-from utils import get_df, get_excel, get_month_days, get_vyucujici
+from utils import get_df, get_excel, get_month_days, get_vyucujici, get_user_info
 
 load_dotenv()
 
@@ -104,6 +104,10 @@ if (
     login_url = os.getenv("LOGIN_URL")
     st.header(f"Přihlašte se pomocí [Stagu]({login_url})")
 else:
+    roles = get_user_info(st.query_params.get_all("stagUserInfo")[0])
+    my_role = st.selectbox("Role", roles.keys())
+    st.session_state["my_role"] = roles[my_role]
+    vars["stagUser"] = st.session_state["my_role"]
     idnos = st.text_input(
         "Idno vyučujícího", placeholder="Zadejte Idno vyučujících oddělené čárkami"
     )
