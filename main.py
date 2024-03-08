@@ -200,7 +200,7 @@ if idnos:
         if df.empty:
             st.info("Žádná výuka.", icon="ℹ️")
         else:
-            st.table(df)
+            st.dataframe(df, use_container_width=True, hide_index=True)
 
         # Část pod tabulkou
         col1, col2, col3 = st.columns([9, 1, 1])

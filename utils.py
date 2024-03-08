@@ -158,8 +158,7 @@ def get_df(idno, url, holidays, vars, type):
             (df["hodinaSkutDo"] - df["hodinaSkutOd"]).apply(lambda x: x.total_seconds())
             / 3600
         )
-        .round()
-        .astype(int)
+        .round(1)
     )
 
     # U zápočtů a zkoušek je místo názvu přemětu pouze kód.
