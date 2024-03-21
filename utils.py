@@ -116,7 +116,7 @@ def get_df(idno, url, holidays, vars, type):
     df = pd.read_csv(StringIO(data), sep=";")
 
     if df.empty:
-        return df, None, None
+        return df
 
     try:
         df.datum = pd.to_datetime(

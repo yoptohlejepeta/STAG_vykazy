@@ -151,7 +151,7 @@ if idnos:
             vars["ucitIdno"] = idno
         except:
             st.subheader(idno)
-            st.write("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
+            st.warning("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
             with st.sidebar:
                 st.markdown(
                     f"<a href = #{idno} style='color: grey; text-decoration: none; font-size: 1.5em;'><span style='transition: color 0.3s;'>?{idno}?</span></a>",
@@ -161,6 +161,17 @@ if idnos:
             continue
 
         df = get_df(idno, rozvrh_url, czech_holidays, vars, vikendy)
+
+        if "akce" not in df.columns:
+            st.subheader(idno)
+            st.warning("Zkontrolujte, že jste správně zadali Idno vyučujícího.")
+            with st.sidebar:
+                st.markdown(
+                    f"<a href = #{idno} style='color: grey; text-decoration: none; font-size: 1.5em;'><span style='transition: color 0.3s;'>?{idno}?</span></a>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(custom_divider, unsafe_allow_html=True)
+            continue
         jmeno, jmeno_tituly = get_vyucujici(idno)
 
         if jmeno == None:

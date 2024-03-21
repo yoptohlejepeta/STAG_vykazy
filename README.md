@@ -15,7 +15,8 @@ K dispozici zobrazení výuky za všechny dny, nebo pouze za víkendy a svátky.
 
 ## TODO
 
-- [ ] vice roli <https://is-stag.zcu.cz/napoveda/web-services/ws_prihlasovani.html>
-- nuly před Idnem
-- optimalizace textu akce
-- roky
+- [x] vice roli <https://is-stag.zcu.cz/napoveda/web-services/ws_prihlasovani.html>
+
+# Priklady
+
+- 8514 (Ricardo)
