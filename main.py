@@ -94,6 +94,8 @@ mesice = [
 if "stagUserTicket" not in st.session_state:
     ticket = st.query_params.get_all("stagUserTicket")
     st.session_state["stagUserTicket"] = ticket
+    # TODO
+    # st.qeuery_params.clear()
 
 # Pokud není ticket -> login stránka
 if (
