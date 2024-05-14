@@ -1,7 +1,11 @@
-# STAG výkazy
+# STAG výkazy 2.0
 
 Aplikace slouží k zobrazení výuky vyučujícíh na UJEP.
 K dispozici zobrazení výuky za všechny dny, nebo pouze za víkendy a svátky.
+
+# V2
+
+Aplikace Stag výkazy 2.0 je postavena na frameworku Reflex
 
 ## Odkaz
 
@@ -13,10 +17,6 @@ K dispozici zobrazení výuky za všechny dny, nebo pouze za víkendy a svátky.
 <https://ws.ujep.cz/ws/services/rest2/ucitel/getUcitelInfo>
 <https://ws.ujep.cz/ws/services/rest2/predmety/getPredmetInfo>
 
-## TODO
-
-- [x] vice roli <https://is-stag.zcu.cz/napoveda/web-services/ws_prihlasovani.html>
-
 # Priklady
 
 - 8514 (Ricardo)
@@ -24,7 +24,6 @@ K dispozici zobrazení výuky za všechny dny, nebo pouze za víkendy a svátky.
 ## TODO
 
 stahnout vykazy, pro vsechna zadana cisla do jednoho souboru
-
 
 ## FIXME
 

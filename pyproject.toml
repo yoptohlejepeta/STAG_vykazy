@@ -1,19 +1,16 @@
 [tool.poetry]
 name = "stag-vykazy"
-version = "0.1.0"
-description = "Aplikace prot tvorbu výkazů vyučujících."
+version = "2.0.0"
+description = ""
 authors = ["yoptohlejepeta <peta.kotlan@seznam.cz>"]
 readme = "README.md"
 packages = [{include = "stag_vykazy"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pandas = "^2.2.0"
-streamlit = "^1.31.1"
-holidays = "^0.42"
-python-dotenv = "^1.0.1"
 requests = "^2.31.0"
-xlsxwriter = "^3.1.9"
+reflex = "^0.5.0"
+python-dotenv = "^1.0.1"
 
 
 [build-system]

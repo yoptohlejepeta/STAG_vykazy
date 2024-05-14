@@ -4,7 +4,7 @@ import datetime
 import holidays
 from dotenv import load_dotenv
 
-from utils import get_df, get_excel, get_month_days, get_vyucujici, get_user_info
+from v1.utils import get_df, get_excel, get_month_days, get_vyucujici, get_user_info
 
 load_dotenv()
 
