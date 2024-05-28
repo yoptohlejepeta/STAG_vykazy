@@ -203,6 +203,6 @@ def get_user_info(info_encoded: str):
     # roles = [{role["role"]: role["userName"]} for role in info["stagUserInfo"]]
     roles = {}
     for role in info["stagUserInfo"]:
-        roles[role["role"]] = role["userName"]
+        roles[role["roleNazev"]] = role["userName"]
     
     return roles
